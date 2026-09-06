@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     public float dinheiro = 0f;
-    public TextMeshProUGUI textoDinheiro; // arrasta o texto de HUD aqui
+    public TextMeshProUGUI textoDinheiro;
 
     void Awake()
     {
@@ -21,10 +21,16 @@ public class GameManager : MonoBehaviour
 
     public bool GastarDinheiro(float valor)
     {
-        if (dinheiro < valor) return false; // sem dinheiro suficiente
+        if (dinheiro < valor) return false;
         dinheiro -= valor;
         AtualizarHUD();
         return true;
+    }
+
+    public void CarregarDinheiro(float valor)
+    {
+        dinheiro = valor;
+        AtualizarHUD();
     }
 
     void AtualizarHUD()

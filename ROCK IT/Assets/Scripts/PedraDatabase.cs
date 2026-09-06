@@ -16,7 +16,7 @@ public class PedraDatabase : MonoBehaviour
                 nome        = "Pedra Comum",
                 descricao   = "Uma pedra qualquer. Pode ter algo dentro, pode não ter.",
                 cor         = new Color(0.5f, 0.4f, 0.3f),
-                precoCompra = 0,        // pedra inicial, grátis
+                precoCompra = 0,
                 recompensaMin = -2,
                 recompensaMax = 5,
                 vidaMaxima  = 10
@@ -58,5 +58,12 @@ public class PedraDatabase : MonoBehaviour
                 vidaMaxima  = 20
             }
         };
+    }
+
+    public PedraDados BuscarPorNome(string nome)
+    {
+        foreach (PedraDados p in todasAsPedras)
+            if (p.nome == nome) return p;
+        return null;
     }
 }

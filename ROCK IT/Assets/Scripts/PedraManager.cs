@@ -1,41 +1,61 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using TMPro;
 
-public class PedraManager : MonoBehaviour, IPointerClickHandler
+public class PedraManager : MonoBehaviour
 {
     [Header("Referências")]
-    public TextMeshProUGUI vidaText;
-    public Image imagemPedra;
+    public TextMeshPro vidaText;
 
     [Header("Configurações")]
     public float escalaAumentada = 2.5f;
     public float duracaoTremor = 0.3f;
-    public float intensidadeTremor = 15f;
+    public float intensidadeTremor = 0.1f;
 
     private PedraDados dados;
     private int vidaAtual;
     private bool estaAtiva = false;
     private bool tremendo = false;
-    private RectTransform pedraRect;
+    private SpriteRenderer spriteRenderer;
 
     void Start()
     {
-        pedraRect = GetComponent<RectTransform>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    // Chamado pelo LojaManager ao spawnar a pedra
     public void Inicializar(PedraDados d)
     {
         dados = d;
         vidaAtual = d.vidaMaxima;
-        imagemPedra.color = d.cor;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.color = d.cor;
         AtualizarTextoVida();
+
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            Vector2 direcao = Random.insideUnitCircle.normalized;
+            rb.AddForce(direcao * 2f, ForceMode2D.Impulse);
+        }
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void InicializarComVida(PedraDados d, int vida)
+    {
+        dados = d;
+        vidaAtual = vida;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.color = d.cor;
+        AtualizarTextoVida();
+
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            Vector2 direcao = Random.insideUnitCircle.normalized;
+            rb.AddForce(direcao * 2f, ForceMode2D.Impulse);
+        }
+    }
+
+    void OnMouseDown()
     {
         if (!estaAtiva)
         {
@@ -51,8 +71,10 @@ public class PedraManager : MonoBehaviour, IPointerClickHandler
     void CentralizarEAumentar()
     {
         estaAtiva = true;
-        pedraRect.anchoredPosition = Vector2.zero;
-        pedraRect.localScale = Vector3.one * escalaAumentada;
+        transform.position = Camera.main.ViewportToWorldPoint(
+            new Vector3(0.5f, 0.5f, 10f)
+        );
+        transform.localScale = Vector3.one * escalaAumentada;
     }
 
     IEnumerator AplicarDano()
@@ -61,19 +83,19 @@ public class PedraManager : MonoBehaviour, IPointerClickHandler
         vidaAtual--;
         AtualizarTextoVida();
 
-        Vector3 posOriginal = pedraRect.localPosition;
+        Vector3 pos = transform.position;
         float tempo = 0f;
 
         while (tempo < duracaoTremor)
         {
-            float offsetX = Random.Range(-intensidadeTremor, intensidadeTremor);
-            float offsetY = Random.Range(-intensidadeTremor, intensidadeTremor);
-            pedraRect.localPosition = posOriginal + new Vector3(offsetX, offsetY, 0);
+            float ox = Random.Range(-intensidadeTremor, intensidadeTremor);
+            float oy = Random.Range(-intensidadeTremor, intensidadeTremor);
+            transform.position = pos + new Vector3(ox, oy, 0);
             tempo += Time.deltaTime;
             yield return null;
         }
 
-        pedraRect.localPosition = posOriginal;
+        transform.position = pos;
         tremendo = false;
 
         if (vidaAtual <= 0)
@@ -90,12 +112,17 @@ public class PedraManager : MonoBehaviour, IPointerClickHandler
     {
         float recompensa = Random.Range(dados.recompensaMin, dados.recompensaMax + 1);
         GameManager.Instance.AdicionarDinheiro(recompensa);
+        Debug.Log("Recompensa: R$ " + recompensa);
+        Destroy(gameObject);
+    }
 
-        string msg = recompensa >= 0
-            ? "+" + recompensa.ToString("C2")
-            : recompensa.ToString("C2");
-        Debug.Log("Pedra destruída! Recompensa: " + msg);
+    public string GetNomePedra()
+    {
+        return dados != null ? dados.nome : "";
+    }
 
-        gameObject.SetActive(false);
+    public int GetVidaAtual()
+    {
+        return vidaAtual;
     }
 }

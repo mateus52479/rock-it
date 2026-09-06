@@ -54,8 +54,12 @@ public class LojaManager : MonoBehaviour
             return;
         }
 
-        // Spawna a pedra no container de pedras
-        GameObject novaPedra = Instantiate(prefabPedra, containerPedras);
+        // Posição aleatória na cena dentro de uma área de mesa
+        float x = Random.Range(-3f, 3f);
+        float y = Random.Range(-2f, 1f);
+        Vector3 posSpawn = new Vector3(x, y, 0f);
+
+        GameObject novaPedra = Instantiate(prefabPedra, posSpawn, Quaternion.identity);
         PedraManager pm = novaPedra.GetComponent<PedraManager>();
         pm.Inicializar(pedra);
 
