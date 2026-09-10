@@ -7,7 +7,9 @@ public class ConfiguracoesManager : MonoBehaviour
 {
     public static ConfiguracoesManager Instance;
 
+    [Header("Paineis")]
     public GameObject painelConfiguracoes;
+    public GameObject painelMenu;
 
     [Header("Audio")]
     public Slider sliderVolumeGeral;
@@ -39,11 +41,15 @@ public class ConfiguracoesManager : MonoBehaviour
     public void AbrirConfiguracoes()
     {
         painelConfiguracoes.SetActive(true);
+        if (painelMenu != null)
+            painelMenu.SetActive(false);
     }
 
     public void FecharConfiguracoes()
     {
         painelConfiguracoes.SetActive(false);
+        if (painelMenu != null)
+            painelMenu.SetActive(true);
         SalvarConfiguracoes();
     }
 
@@ -103,11 +109,9 @@ public class ConfiguracoesManager : MonoBehaviour
 
     public void MudarIdioma(int indice)
     {
-        // 0 = PT-BR, 1 = EN
         string idioma = indice == 0 ? "pt-BR" : "en";
         PlayerPrefs.SetString("Idioma", idioma);
         Debug.Log("Idioma: " + idioma);
-        // Sistema de localização vai ser expandido depois
     }
 
     // --- SAVE DE CONFIGURAÇÕES ---

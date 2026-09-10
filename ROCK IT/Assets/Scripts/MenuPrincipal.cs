@@ -20,8 +20,8 @@ public class MenuPrincipal : MonoBehaviour
 
     public void ContinuarJogo()
     {
+        GameLoader.deveCarregar = true;
         SceneManager.LoadScene("Jogo");
-        // O carregamento acontece na cena do jogo
     }
 
     public void AbrirConfiguracoes()

@@ -31,7 +31,6 @@ public class SaveManager : MonoBehaviour
         SaveData data = new SaveData();
         data.dinheiro = GameManager.Instance.dinheiro;
 
-        // Salva todas as pedras na cena
         PedraManager[] pedras = FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
         foreach (PedraManager p in pedras)
         {
@@ -45,7 +44,9 @@ public class SaveManager : MonoBehaviour
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(caminhoSave, json);
-        Debug.Log("Jogo salvo!");
+
+        Debug.Log("SALVO EM: " + caminhoSave);
+        Debug.Log("CONTEÚDO: " + json);
     }
 
     public bool TemSave()
