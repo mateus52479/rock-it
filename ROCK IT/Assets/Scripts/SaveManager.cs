@@ -31,6 +31,14 @@ public class SaveManager : MonoBehaviour
         SaveData data = new SaveData();
         data.dinheiro = GameManager.Instance.dinheiro;
 
+        // Salva status
+        data.status.nivelForca = StatusManager.Instance.nivelForca;
+        data.status.nivelSorte = StatusManager.Instance.nivelSorte;
+        data.status.nivelFortuna = StatusManager.Instance.nivelFortuna;
+        data.status.habilidadesDesbloqueadas =
+            StatusManager.Instance.GetHabilidadesDesbloqueadas().ToArray();
+
+        // Salva pedras
         PedraManager[] pedras = FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
         foreach (PedraManager p in pedras)
         {
@@ -44,9 +52,7 @@ public class SaveManager : MonoBehaviour
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(caminhoSave, json);
-
-        Debug.Log("SALVO EM: " + caminhoSave);
-        Debug.Log("CONTEÚDO: " + json);
+        Debug.Log("Salvo em: " + caminhoSave);
     }
 
     public bool TemSave()
@@ -62,13 +68,13 @@ public class SaveManager : MonoBehaviour
         SaveData data = JsonUtility.FromJson<SaveData>(json);
 
         GameManager.Instance.CarregarDinheiro(data.dinheiro);
+        StatusManager.Instance.CarregarStatus(data.status);
 
-        // Destroi pedras existentes antes de carregar
-        PedraManager[] pedrasExistentes = FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
+        PedraManager[] pedrasExistentes =
+            FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
         foreach (PedraManager p in pedrasExistentes)
             Destroy(p.gameObject);
 
-        // Spawna pedras salvas
         foreach (PedrasSalva ps in data.pedras)
         {
             PedraDados dados = PedraDatabase.Instance.BuscarPorNome(ps.nomePedra);
@@ -81,7 +87,5 @@ public class SaveManager : MonoBehaviour
             PedraManager pm = novaPedra.GetComponent<PedraManager>();
             pm.InicializarComVida(dados, ps.vidaAtual);
         }
-
-        Debug.Log("Jogo carregado!");
     }
 }

@@ -80,7 +80,10 @@ public class PedraManager : MonoBehaviour
     IEnumerator AplicarDano()
     {
         tremendo = true;
-        vidaAtual--;
+
+        // Força reduz mais vida por clique
+        int dano = Mathf.Max(1, Mathf.RoundToInt(StatusManager.Instance.GetDanoForca()));
+        vidaAtual -= dano;
         AtualizarTextoVida();
 
         Vector3 pos = transform.position;
@@ -110,9 +113,15 @@ public class PedraManager : MonoBehaviour
 
     void PedraDestruida()
     {
-        float recompensa = Random.Range(dados.recompensaMin, dados.recompensaMax + 1);
-        GameManager.Instance.AdicionarDinheiro(recompensa);
-        Debug.Log("Recompensa: R$ " + recompensa);
+        float recompensaBase = Random.Range(dados.recompensaMin, dados.recompensaMax + 1);
+
+        // Aplica Sorte e Fortuna
+        float sorte = StatusManager.Instance.GetMultiplicadorSorte();
+        float fortuna = StatusManager.Instance.GetMultiplicadorFortuna();
+        float recompensaFinal = recompensaBase * sorte * fortuna;
+
+        GameManager.Instance.AdicionarDinheiro(recompensaFinal);
+        Debug.Log("Recompensa: R$ " + recompensaFinal.ToString("F2"));
         Destroy(gameObject);
     }
 
