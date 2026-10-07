@@ -17,8 +17,8 @@ public class PedraDatabase : MonoBehaviour
                 descricao   = "Uma pedra qualquer. Pode ter algo dentro, pode não ter.",
                 cor         = new Color(0.5f, 0.4f, 0.3f),
                 precoCompra = 0,
-                recompensaMin = -2,
-                recompensaMax = 5,
+                recompensaMin = 10000,
+                recompensaMax = 10000,
                 vidaMaxima  = 10
             },
             new PedraDados {
