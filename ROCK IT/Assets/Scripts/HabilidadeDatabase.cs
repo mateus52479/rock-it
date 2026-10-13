@@ -13,58 +13,76 @@ public class HabilidadeDatabase : MonoBehaviour
         todasHabilidades = new HabilidadeDados[]
         {
             new HabilidadeDados {
-                id          = "hab_inicio",
-                nome        = "Primeiros Passos",
-                descricao   = "O começo de tudo. Desbloqueia as demais habilidades.",
-                custo       = 100,
-                requisitoIds = new string[0], // sem requisito
-                tipo        = TipoHabilidade.Geral,
-                valorBonus  = 0
+                id           = "hab_inicio",
+                nome         = "Primeiros Passos",
+                descricao    = "O começo de tudo. Desbloqueia as demais habilidades.",
+                custo        = 100,
+                requisitoIds = new string[0],
+                tipo         = TipoHabilidade.Geral,
+                valorBonus   = 0
             },
             new HabilidadeDados {
-                id          = "hab_forca1",
-                nome        = "Punho de Ferro",
-                descricao   = "Seus golpes ficam mais pesados.",
-                custo       = 300,
+                id           = "desconto_universitario",
+                nome         = "Desconto Universitário",
+                descricao    = "Pague 25% a menos em qualquer compra de pedra.",
+                custo        = 300,
                 requisitoIds = new string[] { "hab_inicio" },
-                tipo        = TipoHabilidade.Forca,
-                valorBonus  = 1
+                tipo         = TipoHabilidade.Geral,
+                valorBonus   = 0
             },
             new HabilidadeDados {
-                id          = "hab_sorte1",
-                nome        = "Olho Clínico",
-                descricao   = "Você reconhece pedras com potencial.",
-                custo       = 300,
+                id           = "cashback",
+                nome         = "Cashback",
+                descricao    = "50% de chance de não gastar dinheiro ao comprar uma pedra.",
+                custo        = 600,
+                requisitoIds = new string[] { "desconto_universitario" },
+                tipo         = TipoHabilidade.Geral,
+                valorBonus   = 0
+            },
+            new HabilidadeDados {
+                id           = "whey_protein",
+                nome         = "Whey Protein",
+                descricao    = "Maior chance de dar dano crítico nas pedras.",
+                custo        = 400,
                 requisitoIds = new string[] { "hab_inicio" },
-                tipo        = TipoHabilidade.Sorte,
-                valorBonus  = 1
+                tipo         = TipoHabilidade.Forca,
+                valorBonus   = 0
             },
             new HabilidadeDados {
-                id          = "hab_fortuna1",
-                nome        = "Toque de Midas",
-                descricao   = "Tudo que você toca vale um pouco mais.",
-                custo       = 500,
+                id           = "trevo_quatro_folhas",
+                nome         = "Trevo de Quatro Folhas",
+                descricao    = "Ao receber o prêmio máximo de uma pedra, receba-o 2x.",
+                custo        = 400,
                 requisitoIds = new string[] { "hab_inicio" },
-                tipo        = TipoHabilidade.Fortuna,
-                valorBonus  = 1
+                tipo         = TipoHabilidade.Sorte,
+                valorBonus   = 0
             },
             new HabilidadeDados {
-                id          = "hab_geral1",
-                nome        = "Minerador Nato",
-                descricao   = "Experiência em tudo. Bônus em força e sorte.",
-                custo       = 400,
+                id           = "buque_trevos",
+                nome         = "Buquê de Trevos",
+                descricao    = "Receba sempre 1.5x de todos os valores de recompensa.",
+                custo        = 800,
+                requisitoIds = new string[] { "trevo_quatro_folhas" },
+                tipo         = TipoHabilidade.Sorte,
+                valorBonus   = 0
+            },
+            new HabilidadeDados {
+                id           = "analista_profissional",
+                nome         = "Analista Profissional",
+                descricao    = "Pedras compradas têm mais chance de receber um valor alto.",
+                custo        = 500,
                 requisitoIds = new string[] { "hab_inicio" },
-                tipo        = TipoHabilidade.Geral,
-                valorBonus  = 0
+                tipo         = TipoHabilidade.Sorte,
+                valorBonus   = 0
             },
             new HabilidadeDados {
-                id          = "hab_forca2",
-                nome        = "Golpe Preciso",
-                descricao   = "Requer Punho de Ferro. Dano ainda maior.",
-                custo       = 800,
-                requisitoIds = new string[] { "hab_forca1" },
-                tipo        = TipoHabilidade.Forca,
-                valorBonus  = 2
+                id           = "engenheiro",
+                nome         = "Engenheiro",
+                descricao    = "Todas as máquinas na mesa trabalham 25% mais rápido.",
+                custo        = 700,
+                requisitoIds = new string[] { "hab_inicio" },
+                tipo         = TipoHabilidade.Geral,
+                valorBonus   = 0
             }
         };
     }

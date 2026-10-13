@@ -48,13 +48,31 @@ public class LojaManager : MonoBehaviour
 
     public void ComprarPedra(PedraDados pedra)
     {
-        if (!GameManager.Instance.GastarDinheiro(pedra.precoCompra))
+        int preco = pedra.precoCompra;
+
+        // Desconto Universitário — 25% de desconto
+        if (StatusManager.Instance.TemHabilidade("desconto_universitario"))
+            preco = Mathf.RoundToInt(preco * 0.75f);
+
+        // Cashback — 50% de chance de não gastar nada
+        bool gratis = false;
+        if (StatusManager.Instance.TemHabilidade("cashback"))
+            if (Random.value < 0.5f)
+                gratis = true;
+
+        if (!gratis)
         {
-            Debug.Log("Sem dinheiro suficiente!");
-            return;
+            if (!GameManager.Instance.GastarDinheiro(preco))
+            {
+                Debug.Log("Sem dinheiro suficiente!");
+                return;
+            }
+        }
+        else
+        {
+            Debug.Log("Cashback! Pedra grátis.");
         }
 
-        // Posição aleatória na cena dentro de uma área de mesa
         float x = Random.Range(-3f, 3f);
         float y = Random.Range(-2f, 1f);
         Vector3 posSpawn = new Vector3(x, y, 0f);

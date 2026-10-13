@@ -38,17 +38,27 @@ public class NoHabilidadeUI : MonoBehaviour,
         {
             fundoNo.color = corDesbloqueado;
             textoCusto.text = "✓";
+            textoCusto.color = Color.white;
         }
         else if (disponivel)
         {
             fundoNo.color = corDisponivel;
             textoCusto.text = "R$ " + dados.custo;
+            textoCusto.color = GameManager.Instance.dinheiro >= dados.custo
+                ? new Color(0.2f, 0.9f, 0.2f)
+                : new Color(0.9f, 0.2f, 0.2f);
         }
         else
         {
             fundoNo.color = corBloqueado;
             textoCusto.text = "[X]";
+            textoCusto.color = Color.white;
         }
+    }
+
+    void Update()
+    {
+        AtualizarVisual();
     }
 
     bool RequisitosAtendidos()

@@ -35,6 +35,7 @@ public class SaveManager : MonoBehaviour
         data.status.nivelForca = StatusManager.Instance.nivelForca;
         data.status.nivelSorte = StatusManager.Instance.nivelSorte;
         data.status.nivelFortuna = StatusManager.Instance.nivelFortuna;
+        data.maquinasCompradas = MaquinaManager.Instance.GetMaquinasCompradas();
         data.status.habilidadesDesbloqueadas =
             StatusManager.Instance.GetHabilidadesDesbloqueadas().ToArray();
 
@@ -69,6 +70,7 @@ public class SaveManager : MonoBehaviour
 
         GameManager.Instance.CarregarDinheiro(data.dinheiro);
         StatusManager.Instance.CarregarStatus(data.status);
+        MaquinaManager.Instance.CarregarMaquinas(data.maquinasCompradas);
 
         PedraManager[] pedrasExistentes =
             FindObjectsByType<PedraManager>(FindObjectsSortMode.None);

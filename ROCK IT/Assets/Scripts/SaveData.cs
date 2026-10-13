@@ -25,4 +25,5 @@ public class SaveData
     public float dinheiro;
     public List<PedrasSalva> pedras = new List<PedrasSalva>();
     public StatusJogador status = new StatusJogador();
+    public List<string> maquinasCompradas = new List<string>();
 }

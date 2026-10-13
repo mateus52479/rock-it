@@ -172,9 +172,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PedraManager
   vidaText: {fileID: 3348208009037799589}
+  prefabTextoFlutuante: {fileID: 8747597412778403502, guid: badca0608911e7d468dc0424cae49b0d, type: 3}
   escalaAumentada: 2.5
   duracaoTremor: 0.3
   intensidadeTremor: 0.1
+  tempoParaArrastar: 0.2
 --- !u!1 &5091038044948531391
 GameObject:
   m_ObjectHideFlags: 0
@@ -331,7 +333,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1

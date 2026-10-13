@@ -26,14 +26,16 @@ public class ArvoreHabilidadesUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     // Posições de cada habilidade na teia
     private Dictionary<string, Vector2> posicoes = new Dictionary<string, Vector2>
-    {
-        { "hab_inicio",   new Vector2(  0,    0) },
-        { "hab_forca1",   new Vector2(-200,  150) },
-        { "hab_sorte1",   new Vector2( 200,  150) },
-        { "hab_fortuna1", new Vector2(  0,   250) },
-        { "hab_geral1",   new Vector2(-200, -150) },
-        { "hab_forca2",   new Vector2(-350,  300) },
-    };
+{
+    { "hab_inicio",              new Vector2(   0,    0) },
+    { "desconto_universitario",  new Vector2(-300,  150) },
+    { "cashback",                new Vector2(-300,  320) },
+    { "whey_protein",            new Vector2(-100,  200) },
+    { "trevo_quatro_folhas",     new Vector2( 150,  150) },
+    { "buque_trevos",            new Vector2( 150,  320) },
+    { "analista_profissional",   new Vector2( 350,  150) },
+    { "engenheiro",              new Vector2(   0, -180) },
+};
 
     void OnEnable()
     {
