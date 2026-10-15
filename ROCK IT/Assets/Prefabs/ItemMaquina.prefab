@@ -33,7 +33,7 @@ RectTransform:
   m_Father: {fileID: 1983631784592179776}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.2}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -87,7 +87,6 @@ GameObject:
   - component: {fileID: 67893360971401398}
   - component: {fileID: 2540211683562263649}
   - component: {fileID: 4961785241129297462}
-  - component: {fileID: 8901338977485442606}
   m_Layer: 5
   m_Name: ItemMaquina
   m_TagString: Untagged
@@ -112,10 +111,10 @@ RectTransform:
   - {fileID: 541564851887820534}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 200}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &67893360971401398
 CanvasRenderer:
@@ -185,20 +184,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &8901338977485442606
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 461964694907108514}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34f8900c3a2f6ee4f95557fbcbd861c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaquinaUIManager
-  containerMaquinas: {fileID: 0}
-  prefabItemMaquina: {fileID: 0}
 --- !u!1 &1131465988230142819
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,7 +468,7 @@ RectTransform:
   m_Father: {fileID: 5893619916494643111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.2, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
