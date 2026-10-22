@@ -23,7 +23,6 @@ public class PedraManager : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
 
-    // Arrastar
     private bool segurando = false;
     private bool arrastando = false;
     private float tempoSegurando = 0f;
@@ -32,6 +31,7 @@ public class PedraManager : MonoBehaviour
 
     private bool interacaoBloqueada = false;
     private bool valorInvertido = false;
+    private bool garantirMaximo = false;
     private SpriteRenderer contornoScanner;
 
     void Start()
@@ -40,13 +40,19 @@ public class PedraManager : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void Inicializar(PedraDados d)
+    public void Inicializar(PedraDados d, bool garantirMaximo = false)
     {
         dados = d;
         vidaAtual = d.vidaMaxima;
+        this.garantirMaximo = garantirMaximo;
+
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer.color = d.cor;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = Color.white;
+
+        AtualizarSpritePorVida();
         AtualizarTextoVida();
 
         if (rb != null)
@@ -62,10 +68,37 @@ public class PedraManager : MonoBehaviour
     {
         dados = d;
         vidaAtual = vida;
+        garantirMaximo = false;
+
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer.color = d.cor;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = Color.white;
+
+        AtualizarSpritePorVida();
         AtualizarTextoVida();
+    }
+
+    void AtualizarSpritePorVida()
+    {
+        if (dados == null || spriteRenderer == null || dados.vidaMaxima <= 0)
+            return;
+
+        float porcentagemVida = (float)vidaAtual / dados.vidaMaxima * 100f;
+        Sprite spriteEscolhido;
+
+        if (porcentagemVida > 75f)
+            spriteEscolhido = dados.sprite100;
+        else if (porcentagemVida > 50f)
+            spriteEscolhido = dados.sprite75;
+        else if (porcentagemVida > 25f)
+            spriteEscolhido = dados.sprite50;
+        else
+            spriteEscolhido = dados.sprite25;
+
+        if (spriteEscolhido != null)
+            spriteRenderer.sprite = spriteEscolhido;
     }
 
     void OnMouseDown()
@@ -86,11 +119,12 @@ public class PedraManager : MonoBehaviour
     {
         if (arrastando)
         {
-            rb.isKinematic = false;
+            if (rb != null)
+                rb.isKinematic = false;
+
             arrastando = false;
             segurando = false;
 
-            // Verifica se soltou em cima de uma máquina
             Collider2D[] colisoes = Physics2D.OverlapCircleAll(transform.position, 0.5f);
             foreach (Collider2D col in colisoes)
             {
@@ -132,9 +166,12 @@ public class PedraManager : MonoBehaviour
                 transform.localScale = Vector3.one;
             }
 
-            rb.isKinematic = true;
-            rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
         }
 
         if (arrastando)
@@ -223,6 +260,7 @@ public class PedraManager : MonoBehaviour
         }
 
         vidaAtual -= danoFinal;
+        AtualizarSpritePorVida();
         AtualizarTextoVida();
         SpawnarTextoDano(danoFinal, critico, posicaoUltimoClique + Vector3.up * 0.3f);
 
@@ -253,9 +291,7 @@ public class PedraManager : MonoBehaviour
     IEnumerator PulsarImpacto(bool critico)
     {
         Vector3 escalaAtual = transform.localScale;
-        Vector3 escalaImpacto = critico
-            ? escalaAtual * 0.6f
-            : escalaAtual * 0.85f;
+        Vector3 escalaImpacto = critico ? escalaAtual * 0.6f : escalaAtual * 0.85f;
 
         float tempo = 0f;
         float duracao = 0.08f;
@@ -268,8 +304,8 @@ public class PedraManager : MonoBehaviour
         }
 
         tempo = 0f;
-
         Vector3 escalaOvershoot = escalaAtual * (critico ? 1.3f : 1.15f);
+
         while (tempo < duracao)
         {
             tempo += Time.deltaTime;
@@ -296,8 +332,10 @@ public class PedraManager : MonoBehaviour
         GameObject obj = Instantiate(prefabTextoFlutuante, posicaoClique, Quaternion.identity);
         TextoFlutuante tf = obj.GetComponent<TextoFlutuante>();
 
+        if (tf == null) return;
+
         string conteudo = "-" + dano;
-        Color cor = critico ? new Color(1f, 0.2f, 0.2f) : new Color(1f, 1f, 1f);
+        Color cor = critico ? new Color(1f, 0.2f, 0.2f) : Color.white;
         float tamanho = critico ? 8f : 5f;
 
         tf.Inicializar(conteudo, cor, tamanho);
@@ -311,26 +349,43 @@ public class PedraManager : MonoBehaviour
 
     void PedraDestruida()
     {
-        float recompensaBase = Random.Range(dados.recompensaMin, dados.recompensaMax + 1);
+        float recompensaFinal;
 
-        if (StatusManager.Instance.TemHabilidade("trevo_quatro_folhas"))
-            if (recompensaBase >= dados.recompensaMax)
-                recompensaBase *= 2f;
+        if (garantirMaximo)
+        {
+            int maiorValor = int.MinValue;
+            foreach (ValorPedra vp in dados.tabelaValores)
+                if (vp.valor > maiorValor) maiorValor = vp.valor;
 
-        if (StatusManager.Instance.TemHabilidade("analista_profissional"))
-            if (Random.value < 0.4f)
-                recompensaBase = dados.recompensaMax;
+            recompensaFinal = maiorValor;
+        }
+        else
+        {
+            int nivelSorte = StatusManager.Instance.nivelSorte;
+            int recompensaBase = dados.SortearValor(nivelSorte);
 
-        float sorte = StatusManager.Instance.GetMultiplicadorSorte();
-        float fortuna = StatusManager.Instance.GetMultiplicadorFortuna();
-        float recompensaFinal = recompensaBase * sorte * fortuna;
+            int maiorValor = int.MinValue;
+            foreach (ValorPedra vp in dados.tabelaValores)
+                if (vp.valor > maiorValor) maiorValor = vp.valor;
 
-        if (StatusManager.Instance.TemHabilidade("buque_trevos"))
-            recompensaFinal *= 1.5f;
+            if (StatusManager.Instance.TemHabilidade("trevo_quatro_folhas"))
+                if (recompensaBase >= maiorValor)
+                    recompensaBase *= 2;
 
-        // Inversor de polaridade
-        if (valorInvertido)
-            recompensaFinal *= -1f;
+            if (StatusManager.Instance.TemHabilidade("analista_profissional"))
+                if (Random.value < 0.4f)
+                    recompensaBase = maiorValor;
+
+            float sorte = StatusManager.Instance.GetMultiplicadorSorte();
+            float fortuna = StatusManager.Instance.GetMultiplicadorFortuna();
+            recompensaFinal = recompensaBase * sorte * fortuna;
+
+            if (StatusManager.Instance.TemHabilidade("buque_trevos"))
+                recompensaFinal *= 1.5f;
+
+            if (valorInvertido)
+                recompensaFinal *= -1f;
+        }
 
         GameManager.Instance.AdicionarDinheiro(recompensaFinal);
         Debug.Log("Recompensa: R$ " + recompensaFinal.ToString("F2"));
@@ -340,8 +395,8 @@ public class PedraManager : MonoBehaviour
     public void BloquearInteracao(bool bloquear)
     {
         interacaoBloqueada = bloquear;
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        if (rb != null) rb.isKinematic = bloquear;
+        Rigidbody2D corpo = GetComponent<Rigidbody2D>();
+        if (corpo != null) corpo.isKinematic = bloquear;
     }
 
     public void AtualizarContornoScanner(bool ativo)
@@ -360,13 +415,17 @@ public class PedraManager : MonoBehaviour
             contorno.transform.localPosition = Vector3.zero;
             contorno.transform.localScale = Vector3.one * 1.2f;
             contornoScanner = contorno.AddComponent<SpriteRenderer>();
-            contornoScanner.sprite = GetComponent<SpriteRenderer>().sprite;
+            contornoScanner.sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
             contornoScanner.sortingOrder = -1;
         }
 
         contornoScanner.enabled = true;
-        float valorMedio = (dados.recompensaMin + dados.recompensaMax) / 2f;
-        contornoScanner.color = valorMedio >= 0
+
+        float somaEsperada = 0f;
+        foreach (ValorPedra vp in dados.tabelaValores)
+            somaEsperada += vp.valor * (vp.chance / 100f);
+
+        contornoScanner.color = somaEsperada >= 0
             ? new Color(0.2f, 0.9f, 0.2f, 0.5f)
             : new Color(0.9f, 0.2f, 0.2f, 0.5f);
     }
@@ -384,6 +443,7 @@ public class PedraManager : MonoBehaviour
     public bool ReceberDanoExterno(int dano)
     {
         vidaAtual -= dano;
+        AtualizarSpritePorVida();
         AtualizarTextoVida();
         SpawnarTextoDano(dano, false, transform.position + Vector3.up * 0.3f);
 
@@ -392,6 +452,7 @@ public class PedraManager : MonoBehaviour
             PedraDestruida();
             return true;
         }
+
         return false;
     }
 

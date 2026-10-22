@@ -23,7 +23,8 @@ public class ItemLoja : MonoBehaviour
     public void Configurar(PedraDados pedra)
     {
         dados = pedra;
-        imagemPedra.color = pedra.cor;
+        imagemPedra.sprite = pedra.sprite100;
+        imagemPedra.color = Color.white;
         textoNome.text = pedra.nome;
         textoDescricao.text = pedra.descricao;
         textoPreco.text = pedra.precoCompra == 0 ? "Grátis" : "R$ " + pedra.precoCompra;

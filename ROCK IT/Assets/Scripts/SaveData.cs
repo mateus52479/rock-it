@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 
@@ -23,7 +24,13 @@ public class StatusJogador
 public class SaveData
 {
     public float dinheiro;
+
     public List<PedrasSalva> pedras = new List<PedrasSalva>();
+
     public StatusJogador status = new StatusJogador();
+
     public List<string> maquinasCompradas = new List<string>();
+
+    // Registra se a primeira Pedra Comum já foi comprada.
+    public bool primeiraComumComprada = false;
 }
