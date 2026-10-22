@@ -25,6 +25,7 @@ public class ItemLoja : MonoBehaviour
         dados = pedra;
         imagemPedra.sprite = pedra.sprite100;
         imagemPedra.color = Color.white;
+        imagemPedra.preserveAspect = true;
         textoNome.text = pedra.nome;
         textoDescricao.text = pedra.descricao;
         textoPreco.text = pedra.precoCompra == 0 ? "Grátis" : "R$ " + pedra.precoCompra;
