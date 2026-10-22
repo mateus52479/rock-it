@@ -11,7 +11,7 @@ public class PedraManager : MonoBehaviour
     public GameObject prefabTextoFlutuante;
 
     [Header("Configurações")]
-    public float escalaAumentada = 1.2f;
+    public float escalaAumentada = 2.5f;
     public float duracaoTremor = 0.3f;
     public float intensidadeTremor = 0.1f;
     public float tempoParaArrastar = 0.2f;
