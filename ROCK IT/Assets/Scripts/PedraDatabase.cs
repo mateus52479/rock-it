@@ -26,10 +26,10 @@ public class PedraDatabase : MonoBehaviour
                 vidaMaxima = 12,
                 tabelaValores = new ValorPedra[]
                 {
-                    new ValorPedra { valor = -5, chance = 20f },
-                    new ValorPedra { valor = 0, chance = 40f },
-                    new ValorPedra { valor = 5, chance = 35f },
-                    new ValorPedra { valor = 10, chance = 5f },
+                    new ValorPedra { valor = -5, chance = 10f },
+                    new ValorPedra { valor = 0, chance = 15f },
+                    new ValorPedra { valor = 5, chance = 40f },
+                    new ValorPedra { valor = 10, chance = 35f },
                 }
             },
             new PedraDados {
