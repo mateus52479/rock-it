@@ -17,7 +17,7 @@ public class MaquinaLixo : MonoBehaviour
         spriteRenderer.color = id == "lixo_luxo" ? corLixoLuxo : corLixoNormal;
     }
 
-    // Chamado pelo PedraManager quando a pedra é solta em cima do lixo
+    // Chamado pelo PedraManager quando a pedra Ã© solta em cima do lixo
     public void ReceberPedra(PedraManager pedra)
     {
         if (!ativo) return;

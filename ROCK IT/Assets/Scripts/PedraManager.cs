@@ -16,12 +16,26 @@ public class PedraManager : MonoBehaviour
     public float intensidadeTremor = 0.1f;
     public float tempoParaArrastar = 0.2f;
 
+    [Header("Escala")]
+    [Tooltip("Largura visível da pedra em unidades de mundo (ignora a margem transparente do PNG).")]
+    public float larguraMundoAlvo = 1.8f;
+
+    [Header("Animação")]
+    [Tooltip("Quadros por segundo das pedras com segundo sprite. 0 desativa a animação.")]
+    public float framesPorSegundo = 2f;
+
     private PedraDados dados;
     private int vidaAtual;
     private bool estaAtiva = false;
     private bool tremendo = false;
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
+    private BoxCollider2D colisor;
+
+    private Vector3 escalaBase = Vector3.one;
+    private readonly Sprite[] parAtual = new Sprite[2];
+    private int frameAtual;
+    private float proximoTrocaDeFrame;
 
     private bool segurando = false;
     private bool arrastando = false;
@@ -38,6 +52,25 @@ public class PedraManager : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        PrepararColisor();
+    }
+
+    /// <summary>
+    /// Garante um BoxCollider2D e desliga qualquer outro collider antigo.
+    /// O tamanho é ajustado em AplicarEscalaEColisor() conforme o sprite atual.
+    /// </summary>
+    void PrepararColisor()
+    {
+        colisor = GetComponent<BoxCollider2D>();
+
+        if (colisor == null)
+            colisor = gameObject.AddComponent<BoxCollider2D>();
+
+        foreach (Collider2D outro in GetComponents<Collider2D>())
+        {
+            if (outro != colisor)
+                outro.enabled = false;
+        }
     }
 
     public void Inicializar(PedraDados d, bool garantirMaximo = false)
@@ -48,6 +81,7 @@ public class PedraManager : MonoBehaviour
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        PrepararColisor();
 
         if (spriteRenderer != null)
             spriteRenderer.color = Color.white;
@@ -72,6 +106,7 @@ public class PedraManager : MonoBehaviour
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        PrepararColisor();
 
         if (spriteRenderer != null)
             spriteRenderer.color = Color.white;
@@ -86,19 +121,96 @@ public class PedraManager : MonoBehaviour
             return;
 
         float porcentagemVida = (float)vidaAtual / dados.vidaMaxima * 100f;
-        Sprite spriteEscolhido;
+        Sprite spriteA;
+        Sprite spriteB;
 
         if (porcentagemVida > 75f)
-            spriteEscolhido = dados.sprite100;
+        {
+            spriteA = dados.sprite100;
+            spriteB = dados.sprite100B;
+        }
         else if (porcentagemVida > 50f)
-            spriteEscolhido = dados.sprite75;
+        {
+            spriteA = dados.sprite75;
+            spriteB = dados.sprite75B;
+        }
         else if (porcentagemVida > 25f)
-            spriteEscolhido = dados.sprite50;
+        {
+            spriteA = dados.sprite50;
+            spriteB = dados.sprite50B;
+        }
         else
-            spriteEscolhido = dados.sprite25;
+        {
+            spriteA = dados.sprite25;
+            spriteB = dados.sprite25B;
+        }
 
-        if (spriteEscolhido != null)
-            spriteRenderer.sprite = spriteEscolhido;
+        if (spriteA != null)
+            spriteRenderer.sprite = spriteA;
+
+        parAtual[0] = spriteA;
+        parAtual[1] = dados.animarFrames ? spriteB : null;
+        frameAtual = 0;
+        proximoTrocaDeFrame = Time.time + IntervaloDeFrame();
+
+        AplicarEscalaEColisor();
+    }
+
+    /// <summary>
+    /// Ajusta escala e collider para a área realmente desenhada do sprite atual.
+    /// A pedra passa a ter sempre a largura de mundo desejada e a hitbox cobre o desenho inteiro.
+    /// </summary>
+    void AplicarEscalaEColisor()
+    {
+        Sprite referencia = parAtual[0];
+
+        if (referencia == null && spriteRenderer != null)
+            referencia = spriteRenderer.sprite;
+
+        if (referencia == null)
+            return;
+
+        Bounds visivel = SpriteUtil.ObterBoundsVisiveis(referencia);
+
+        // Quando a pedra tem dois frames, a hitbox usa a união dos dois,
+        // assim ela não "pulsa" a cada troca de frame.
+        if (parAtual[1] != null)
+            visivel.Encapsulate(SpriteUtil.ObterBoundsVisiveis(parAtual[1]));
+
+        float largura = Mathf.Max(visivel.size.x, 0.0001f);
+        escalaBase = Vector3.one * (larguraMundoAlvo / largura);
+
+        transform.localScale = estaAtiva ? escalaBase * escalaAumentada : escalaBase;
+
+        if (colisor == null)
+            PrepararColisor();
+
+        if (colisor != null)
+        {
+            colisor.size = new Vector2(
+                Mathf.Max(visivel.size.x, 0.01f),
+                Mathf.Max(visivel.size.y, 0.01f)
+            );
+            colisor.offset = visivel.center;
+        }
+    }
+
+    float IntervaloDeFrame()
+    {
+        return framesPorSegundo > 0f ? 1f / framesPorSegundo : float.PositiveInfinity;
+    }
+
+    void AtualizarAnimacao()
+    {
+        if (parAtual[1] == null || framesPorSegundo <= 0f || spriteRenderer == null)
+            return;
+
+        if (Time.time < proximoTrocaDeFrame)
+            return;
+
+        proximoTrocaDeFrame = Time.time + IntervaloDeFrame();
+        frameAtual = 1 - frameAtual;
+        spriteRenderer.sprite = frameAtual == 0 ? parAtual[0] : parAtual[1];
     }
 
     void OnMouseDown()
@@ -152,6 +264,8 @@ public class PedraManager : MonoBehaviour
 
     void Update()
     {
+        AtualizarAnimacao();
+
         if (!segurando) return;
 
         tempoSegurando += Time.deltaTime;
@@ -163,7 +277,7 @@ public class PedraManager : MonoBehaviour
             if (estaAtiva)
             {
                 estaAtiva = false;
-                transform.localScale = Vector3.one;
+                transform.localScale = escalaBase;
             }
 
             if (rb != null)
@@ -191,7 +305,7 @@ public class PedraManager : MonoBehaviour
     IEnumerator ViajarAoCentro()
     {
         Vector3 destino = Camera.main.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 10f));
-        Vector3 escalaDestino = Vector3.one * escalaAumentada;
+        Vector3 escalaDestino = escalaBase * escalaAumentada;
         Vector3 posInicial = transform.position;
         Vector3 escalaInicial = transform.localScale;
 
@@ -217,8 +331,8 @@ public class PedraManager : MonoBehaviour
 
     IEnumerator Bounce()
     {
-        Vector3 escalaBase = Vector3.one * escalaAumentada;
-        Vector3 escalaEsticada = escalaBase * 1.2f;
+        Vector3 escalaAlvo = escalaBase * escalaAumentada;
+        Vector3 escalaEsticada = escalaAlvo * 1.2f;
 
         float tempo = 0f;
         float duracao = 0.15f;
@@ -227,7 +341,7 @@ public class PedraManager : MonoBehaviour
         {
             tempo += Time.deltaTime;
             float t = tempo / duracao;
-            transform.localScale = Vector3.Lerp(escalaBase, escalaEsticada, t);
+            transform.localScale = Vector3.Lerp(escalaAlvo, escalaEsticada, t);
             yield return null;
         }
 
@@ -237,11 +351,11 @@ public class PedraManager : MonoBehaviour
         {
             tempo += Time.deltaTime;
             float t = tempo / duracao;
-            transform.localScale = Vector3.Lerp(escalaEsticada, escalaBase, t);
+            transform.localScale = Vector3.Lerp(escalaEsticada, escalaAlvo, t);
             yield return null;
         }
 
-        transform.localScale = escalaBase;
+        transform.localScale = escalaAlvo;
     }
 
     IEnumerator AplicarDano()
@@ -373,12 +487,15 @@ public class PedraManager : MonoBehaviour
                     recompensaBase *= 2;
 
             if (StatusManager.Instance.TemHabilidade("analista_profissional"))
-                if (Random.value < 0.4f)
+                if (Random.value < 0.1f)
                     recompensaBase = maiorValor;
 
-            float sorte = StatusManager.Instance.GetMultiplicadorSorte();
+            // Fortuna multiplica apenas o lucro. Se o resultado da pedra for
+            // negativo, o multiplicador não pode aumentar o prejuízo.
             float fortuna = StatusManager.Instance.GetMultiplicadorFortuna();
-            recompensaFinal = recompensaBase * sorte * fortuna;
+            recompensaFinal = recompensaBase > 0
+                ? recompensaBase * fortuna
+                : recompensaBase;
 
             if (StatusManager.Instance.TemHabilidade("buque_trevos"))
                 recompensaFinal *= 1.5f;
@@ -421,11 +538,13 @@ public class PedraManager : MonoBehaviour
 
         contornoScanner.enabled = true;
 
-        float somaEsperada = 0f;
-        foreach (ValorPedra vp in dados.tabelaValores)
-            somaEsperada += vp.valor * (vp.chance / 100f);
+        // Verde quando a recompensa média (com a Sorte e a Fortuna atuais)
+        // paga o preço da pedra; vermelho quando comprar dá prejuízo.
+        float valorEsperado = dados.ValorEsperado(
+            StatusManager.Instance.nivelSorte,
+            StatusManager.Instance.GetMultiplicadorFortuna());
 
-        contornoScanner.color = somaEsperada >= 0
+        contornoScanner.color = valorEsperado >= dados.precoCompra
             ? new Color(0.2f, 0.9f, 0.2f, 0.5f)
             : new Color(0.9f, 0.2f, 0.2f, 0.5f);
     }

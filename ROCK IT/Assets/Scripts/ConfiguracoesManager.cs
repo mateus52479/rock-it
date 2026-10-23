@@ -114,7 +114,7 @@ public class ConfiguracoesManager : MonoBehaviour
         Debug.Log("Idioma: " + idioma);
     }
 
-    // --- SAVE DE CONFIGURAÇÕES ---
+    // --- SAVE DE CONFIGURAÃ‡Ã•ES ---
 
     void SalvarConfiguracoes()
     {

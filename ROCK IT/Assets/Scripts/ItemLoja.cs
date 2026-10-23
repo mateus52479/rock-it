@@ -11,44 +11,59 @@ public class ItemLoja : MonoBehaviour
     public Button botaoComprar;
 
     private PedraDados dados;
+    private string ultimoPrecoExibido;
 
     private Color corPodeComprar = new Color(0.2f, 0.9f, 0.2f);
     private Color corSemDinheiro = new Color(0.9f, 0.2f, 0.2f);
 
     void Update()
     {
-        AtualizarCorPreco();
+        AtualizarPreco();
     }
 
     public void Configurar(PedraDados pedra)
     {
         dados = pedra;
-        imagemPedra.sprite = pedra.sprite100;
+        // Recorta a margem transparente do PNG para o desenho preencher o slot da loja.
+        imagemPedra.sprite = SpriteUtil.RecortarParaVisivel(pedra.sprite100);
         imagemPedra.color = Color.white;
         imagemPedra.preserveAspect = true;
         textoNome.text = pedra.nome;
         textoDescricao.text = pedra.descricao;
-        textoPreco.text = pedra.precoCompra == 0 ? "Gr�tis" : "R$ " + pedra.precoCompra;
         botaoComprar.onClick.AddListener(() => LojaManager.Instance.ComprarPedra(dados));
-        AtualizarCorPreco();
+        AtualizarPreco();
     }
 
-    void AtualizarCorPreco()
+    void AtualizarPreco()
     {
         if (dados == null) return;
 
+        // A primeira Pedra Comum é grátis e garantida com o prêmio máximo.
+        bool primeiraGratis =
+            dados.nome == "Pedra Comum" &&
+            SaveManager.Instance != null &&
+            !SaveManager.Instance.PrimeiraComumComprada();
+
         int preco = dados.precoCompra;
 
-        if (StatusManager.Instance.TemHabilidade("desconto_universitario"))
-            preco = Mathf.RoundToInt(preco * 0.75f);
-
-        if (preco == 0)
+        if (!primeiraGratis &&
+            StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
-            textoPreco.color = corPodeComprar;
-            return;
+            preco = Mathf.RoundToInt(preco * 0.75f);
         }
 
-        textoPreco.color = GameManager.Instance.dinheiro >= preco
+        string texto = primeiraGratis
+            ? "Grátis"
+            : "R$ " + NumeroUtil.Formatar(preco, 0);
+
+        // Só reescreve quando muda, para não gerar lixo a cada frame.
+        if (texto != ultimoPrecoExibido)
+        {
+            ultimoPrecoExibido = texto;
+            textoPreco.text = texto;
+        }
+
+        textoPreco.color = (primeiraGratis || preco == 0 || GameManager.Instance.dinheiro >= preco)
             ? corPodeComprar
             : corSemDinheiro;
     }

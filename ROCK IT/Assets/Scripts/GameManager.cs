@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textoDiferenca; // texto do +X ou -X ao lado
 
     private float dinheiroExibido = 0f;
-    private float velocidadeContador = 5f; // qu„o r·pido o contador sobe/desce
+    private float velocidadeContador = 5f; // qu√£o r√°pido o contador sobe/desce
     private Coroutine corotinaContador;
     private Coroutine corotinaDiferenca;
 
@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
         if (Mathf.Abs(dinheiroExibido - dinheiro) > 0.01f)
         {
             float velocidade = Mathf.Abs(dinheiro - dinheiroExibido) / 0.8f; // completa em 0.8 segundos
-            velocidade = Mathf.Max(velocidade, 10f); // velocidade mÌnima de 1 por segundo
+            velocidade = Mathf.Max(velocidade, 10f); // velocidade m√≠nima de 1 por segundo
             dinheiroExibido = Mathf.MoveTowards(dinheiroExibido, dinheiro, velocidade * Time.deltaTime);
             textoDinheiro.text = "R$ " + dinheiroExibido.ToString("F2");
         }
@@ -38,7 +38,9 @@ public class GameManager : MonoBehaviour
 
     public void AdicionarDinheiro(float valor)
     {
-        dinheiro += valor;
+        // Recompensa negativa n√£o pode deixar o saldo negativo: se isso
+        // acontecesse o jogador n√£o conseguiria comprar nem a Pedra Comum.
+        dinheiro = Mathf.Max(0f, dinheiro + valor);
         MostrarDiferenca(valor);
     }
 

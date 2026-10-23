@@ -17,7 +17,7 @@ public class MaquinaUIManager : MonoBehaviour
 
         foreach (MaquinaDados maquina in MaquinaDatabase.Instance.todasMaquinas)
         {
-            // Não mostra upgrades como itens separados
+            // NÃ£o mostra upgrades como itens separados
             bool eUpgrade = false;
             foreach (MaquinaDados m in MaquinaDatabase.Instance.todasMaquinas)
                 if (m.idUpgrade == maquina.id) { eUpgrade = true; break; }

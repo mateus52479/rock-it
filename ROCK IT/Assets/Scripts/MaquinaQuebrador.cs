@@ -7,9 +7,13 @@ public class MaquinaQuebrador : MonoBehaviour
     public Color corVazia = Color.white;
     public Color corOcupada = Color.cyan;
 
+    [Header("Dano")]
+    [Tooltip("Fatia do dano do jogador aplicada a cada ataque. Assim o quebrador acompanha a progressão.")]
+    public float percentualDoDanoDoJogador = 0.2f;
+
     private bool ativo = false;
     private PedraManager pedraAtual = null;
-    private int danosPorSegundo = 1;
+    private int ataquesPorSegundo = 1;
 
     public void Ativar()
     {
@@ -33,11 +37,16 @@ public class MaquinaQuebrador : MonoBehaviour
     {
         while (pedraAtual != null)
         {
-            yield return new WaitForSeconds(1f / danosPorSegundo);
+            yield return new WaitForSeconds(1f / Mathf.Max(1, ataquesPorSegundo));
 
             if (pedraAtual == null) break;
 
-            bool destruida = pedraAtual.ReceberDanoExterno(danosPorSegundo);
+            int dano = Mathf.Max(
+                1,
+                Mathf.RoundToInt(StatusManager.Instance.GetDanoForca() * percentualDoDanoDoJogador)
+            );
+
+            bool destruida = pedraAtual.ReceberDanoExterno(dano);
             if (destruida)
             {
                 pedraAtual = null;
@@ -48,9 +57,9 @@ public class MaquinaQuebrador : MonoBehaviour
 
     public void Evoluir()
     {
-        danosPorSegundo++;
-        Debug.Log("Quebrador evolu�do: " + danosPorSegundo + " dano/s");
+        ataquesPorSegundo++;
+        Debug.Log("Quebrador evoluído: " + ataquesPorSegundo + " ataque(s)/s");
     }
 
-    public int GetDanosPorSegundo() { return danosPorSegundo; }
+    public int GetAtaquesPorSegundo() { return ataquesPorSegundo; }
 }

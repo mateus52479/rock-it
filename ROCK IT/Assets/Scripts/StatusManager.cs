@@ -17,7 +17,11 @@ public class StatusManager : MonoBehaviour
     private int custoBaseForca = 50;
     private int custoBaseSorte = 50;
     private int custoBaseFortuna = 100;
-    private float multiplicadorCusto = 2.5f;
+
+    [Header("Curva de custo")]
+    [Tooltip("Quanto o próximo nível custa em relação ao anterior. " +
+             "1.6 acompanha o ganho de dinheiro das pedras; 2.5 tornava o nível 20 inalcançável.")]
+    public float multiplicadorCusto = 1.6f;
 
     void Awake()
     {
@@ -25,9 +29,17 @@ public class StatusManager : MonoBehaviour
     }
 
     // --- FORÇA ---
+    [Header("Progressão de Força")]
+    [Tooltip("Dano aplicado no nível 1.")]
+    public float danoBase = 1f;
+
+    [Tooltip("Multiplicador de dano por nível. 1.75 acompanha a vida das pedras " +
+             "(o dano cresce no mesmo ritmo em que as pedras ficam mais duras).")]
+    public float fatorDanoPorNivel = 1.75f;
+
     public float GetDanoForca()
     {
-        return 1f + (nivelForca - 1) * 0.5f; // cada nível adiciona 0.5 de dano
+        return danoBase * Mathf.Pow(fatorDanoPorNivel, Mathf.Max(0, nivelForca - 1));
     }
 
     public int GetCustoProximoNivelForca()
@@ -44,9 +56,13 @@ public class StatusManager : MonoBehaviour
     }
 
     // --- SORTE ---
-    public float GetMultiplicadorSorte()
+    /// <summary>
+    /// Cada nível de Sorte move 1 ponto percentual de chance do pior resultado
+    /// da pedra para o prêmio máximo. É isso que permite virar o jogo.
+    /// </summary>
+    public float GetDeslocamentoSorte()
     {
-        return 1f + (nivelSorte - 1) * 0.1f; // cada nível adiciona 10% na recompensa
+        return Mathf.Max(0, nivelSorte - 1);
     }
 
     public int GetCustoProximoNivelSorte()
@@ -63,9 +79,12 @@ public class StatusManager : MonoBehaviour
     }
 
     // --- FORTUNA ---
+    [Tooltip("Multiplicador de Fortuna por nível. Fortuna multiplica apenas recompensas positivas.")]
+    public float fatorFortunaPorNivel = 1.25f;
+
     public float GetMultiplicadorFortuna()
     {
-        return 1f + (nivelFortuna - 1) * 0.1f; // começa em 1.0, sobe 0.1 por nível
+        return Mathf.Pow(fatorFortunaPorNivel, Mathf.Max(0, nivelFortuna - 1));
     }
 
     public int GetCustoProximoNivelFortuna()
@@ -133,5 +152,32 @@ public class StatusManager : MonoBehaviour
         nivelSorte = dados.nivelSorte;
         nivelFortuna = dados.nivelFortuna;
         habilidadesDesbloqueadas = new List<string>(dados.habilidadesDesbloqueadas);
+    }
+}
+
+/// <summary>
+/// Formata números grandes de forma legível (1,8 mil / 36,4 mi / 700,0 bi).
+/// </summary>
+public static class NumeroUtil
+{
+    private static readonly string[] sufixos = { "", " mil", " mi", " bi", " tri", " qua" };
+
+    public static string Formatar(float valor, int casasDecimais = 1)
+    {
+        float absoluto = Mathf.Abs(valor);
+
+        if (absoluto < 1000f)
+            return valor.ToString("F" + Mathf.Max(0, casasDecimais));
+
+        int ordem = Mathf.Min((int)(Mathf.Log10(absoluto) / 3f), sufixos.Length - 1);
+        float reduzido = valor / Mathf.Pow(1000f, ordem);
+        int casas = Mathf.Abs(reduzido) >= 100f ? 0 : 1;
+
+        return reduzido.ToString("F" + casas) + sufixos[ordem];
+    }
+
+    public static string FormatarDinheiro(float valor)
+    {
+        return "R$ " + Formatar(valor);
     }
 }

@@ -69,7 +69,7 @@ public class HabilidadeDatabase : MonoBehaviour
             new HabilidadeDados {
                 id           = "analista_profissional",
                 nome         = "Analista Profissional",
-                descricao    = "Pedras compradas têm mais chance de receber um valor alto.",
+                descricao    = "10% de chance de receber o prêmio máximo de qualquer pedra.",
                 custo        = 500,
                 requisitoIds = new string[] { "hab_inicio" },
                 tipo         = TipoHabilidade.Sorte,

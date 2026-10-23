@@ -23,21 +23,21 @@ public class ItemStatusUI : MonoBehaviour
         switch (tipoStatus)
         {
             case 0:
-                textoNome.text = "Força";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelForca +
-                    "\nDano: " + StatusManager.Instance.GetDanoForca().ToString("F1");
+                textoNome.text = "ForÃ§a";
+                textoNivel.text = "NÃ­vel " + StatusManager.Instance.nivelForca +
+                    "\nDano: " + NumeroUtil.Formatar(StatusManager.Instance.GetDanoForca(), 1);
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelForca());
                 break;
             case 1:
                 textoNome.text = "Sorte";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelSorte +
-                    "\nBônus: +" + ((StatusManager.Instance.GetMultiplicadorSorte() - 1) * 100).ToString("F0") + "%";
+                textoNivel.text = "NÃ­vel " + StatusManager.Instance.nivelSorte +
+                    "\nChance mÃ¡x.: +" + NumeroUtil.Formatar(StatusManager.Instance.GetDeslocamentoSorte(), 0) + "%";
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelSorte());
                 break;
             case 2:
                 textoNome.text = "Fortuna";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelFortuna +
-                    "\nMultiplicador: x" + StatusManager.Instance.GetMultiplicadorFortuna().ToString("F1");
+                textoNivel.text = "NÃ­vel " + StatusManager.Instance.nivelFortuna +
+                    "\nMultiplicador: x" + NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortuna(), 1);
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelFortuna());
                 break;
         }
@@ -45,7 +45,7 @@ public class ItemStatusUI : MonoBehaviour
 
     void AtualizarCorCusto(int custo)
     {
-        textoCusto.text = "R$ " + custo;
+        textoCusto.text = NumeroUtil.FormatarDinheiro(custo);
         textoCusto.color = GameManager.Instance.dinheiro >= custo
             ? new Color(0.2f, 0.9f, 0.2f)
             : new Color(0.9f, 0.2f, 0.2f);

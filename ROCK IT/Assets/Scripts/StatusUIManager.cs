@@ -21,7 +21,7 @@ public class StatusUIManager : MonoBehaviour
         {
             GameObject item = Instantiate(prefabItemStatus, containerStatus);
 
-            // Força o tamanho do item
+            // ForÃ§a o tamanho do item
             RectTransform rt = item.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0, 1);
             rt.anchorMax = new Vector2(1, 1);
@@ -34,7 +34,7 @@ public class StatusUIManager : MonoBehaviour
             ui.Configurar(i);
         }
 
-        // Força o Content a recalcular
+        // ForÃ§a o Content a recalcular
         LayoutRebuilder.ForceRebuildLayoutImmediate(containerStatus as RectTransform);
     }
 }

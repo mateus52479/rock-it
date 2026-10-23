@@ -7,7 +7,7 @@ public class MaquinaManager : MonoBehaviour
 
     private List<string> maquinasCompradas = new List<string>();
 
-    // Referências das máquinas na cena
+    // ReferÃªncias das mÃ¡quinas na cena
     public MaquinaLixo maquinaLixo;
     public MaquinaScanner maquinaScanner;
     public MaquinaQuebrador maquinaQuebrador;
@@ -28,7 +28,7 @@ public class MaquinaManager : MonoBehaviour
         if (TemMaquina(dados.id)) return false;
         if (!GameManager.Instance.GastarDinheiro(dados.preco)) return false;
 
-        // Se é upgrade, remove a anterior
+        // Se Ã© upgrade, remove a anterior
         foreach (MaquinaDados m in MaquinaDatabase.Instance.todasMaquinas)
             if (m.idUpgrade == dados.id)
                 maquinasCompradas.Remove(m.id);

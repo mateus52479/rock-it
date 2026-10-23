@@ -45,13 +45,13 @@ public class LojaManager : MonoBehaviour
     {
         if (PedraDatabase.Instance == null)
         {
-            Debug.LogError("LojaManager: PedraDatabase n„o encontrado.");
+            Debug.LogError("LojaManager: PedraDatabase n√£o encontrado.");
             return;
         }
 
         if (containerItens == null || prefabItemLoja == null)
         {
-            Debug.LogError("LojaManager: referÍncias dos itens da loja n„o configuradas.");
+            Debug.LogError("LojaManager: refer√™ncias dos itens da loja n√£o configuradas.");
             return;
         }
 
@@ -67,15 +67,15 @@ public class LojaManager : MonoBehaviour
             if (itemScript != null)
                 itemScript.Configurar(pedra);
             else
-                Debug.LogError("O prefab de item n„o possui ItemLoja.");
+                Debug.LogError("O prefab de item n√£o possui ItemLoja.");
         }
     }
 
-    public void ComprarPedra(PedraDados pedra)
+    public void ComprarPedra(PedraDados pedra, bool gratisForcado = false)
     {
         if (pedra == null)
         {
-            Debug.LogError("LojaManager: pedra inv·lida.");
+            Debug.LogError("LojaManager: pedra inv√°lida.");
             return;
         }
 
@@ -83,25 +83,25 @@ public class LojaManager : MonoBehaviour
             GameManager.Instance == null ||
             StatusManager.Instance == null)
         {
-            Debug.LogError("LojaManager: um dos managers necess·rios n„o existe.");
+            Debug.LogError("LojaManager: um dos managers necess√°rios n√£o existe.");
             return;
         }
 
         if (prefabPedra == null)
         {
-            Debug.LogError("LojaManager: prefabPedra n„o foi configurado.");
+            Debug.LogError("LojaManager: prefabPedra n√£o foi configurado.");
             return;
         }
 
-        // Verifica se esta È a primeira compra da Pedra Comum.
+        // Verifica se esta √© a primeira compra da Pedra Comum.
         bool primeiraComum =
             pedra.nome == "Pedra Comum" &&
             !SaveManager.Instance.PrimeiraComumComprada();
 
-        // A primeira Pedra Comum È gratuita.
+        // A primeira Pedra Comum √© gratuita.
         int preco = primeiraComum ? 0 : pedra.precoCompra;
 
-        // Desconto Universit·rio: reduz o preÁo em 25%.
+        // Desconto Universit√°rio: reduz o pre√ßo em 25%.
         if (!primeiraComum &&
             StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
@@ -109,7 +109,7 @@ public class LojaManager : MonoBehaviour
         }
 
         // Cashback: 50% de chance de tornar a compra gratuita.
-        bool gratis = false;
+        bool gratis = gratisForcado;
 
         if (!primeiraComum &&
             StatusManager.Instance.TemHabilidade("cashback"))
@@ -118,7 +118,7 @@ public class LojaManager : MonoBehaviour
                 gratis = true;
         }
 
-        // Cobra somente quando a compra n„o È gratuita.
+        // Cobra somente quando a compra n√£o √© gratuita.
         if (!gratis && preco > 0)
         {
             if (!GameManager.Instance.GastarDinheiro(preco))
@@ -145,21 +145,51 @@ public class LojaManager : MonoBehaviour
         if (pm == null)
         {
             Debug.LogError(
-                "O prefab da pedra n„o possui PedraManager."
+                "O prefab da pedra n√£o possui PedraManager."
             );
 
             Destroy(novaPedra);
             return;
         }
 
-        // O segundo argumento informa se a recompensa m·xima
+        // O segundo argumento informa se a recompensa m√°xima
         // deve ser garantida nesta pedra.
         pm.Inicializar(pedra, primeiraComum);
 
-        // Marca a primeira compra somente apÛs criar a pedra.
+        // Marca a primeira compra somente ap√≥s criar a pedra.
         if (primeiraComum)
             SaveManager.Instance.MarcarPrimeiraComum();
 
-        FecharLoja();
+        if (!gratisForcado)
+            FecharLoja();
+    }
+
+    private float proximaVerificacaoResgate = 0f;
+
+    void Update()
+    {
+        if (Time.unscaledTime < proximaVerificacaoResgate) return;
+        proximaVerificacaoResgate = Time.unscaledTime + 1f;
+
+        if (GameManager.Instance == null ||
+            PedraDatabase.Instance == null ||
+            prefabPedra == null)
+            return;
+
+        if (GameManager.Instance.dinheiro >= 1f)
+            return;
+
+        // Sem dinheiro e sem nenhuma pedra na mesa: o jogador ficaria
+        // travado para sempre. D√° uma Pedra Comum de socorro.
+        PedraManager[] pedrasNaMesa =
+            FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
+
+        if (pedrasNaMesa.Length > 0)
+            return;
+
+        PedraDados comum = PedraDatabase.Instance.todasAsPedras[0];
+
+        if (comum != null)
+            ComprarPedra(comum, true);
     }
 }

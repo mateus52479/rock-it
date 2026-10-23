@@ -8,7 +8,7 @@ public class MenuPrincipal : MonoBehaviour
 
     void Start()
     {
-        // Desativa continuar se n„o tiver save
+        // Desativa continuar se n√£o tiver save
         if (botaoContinuar != null)
             botaoContinuar.interactable = SaveManager.Instance.TemSave();
     }
@@ -32,7 +32,7 @@ public class MenuPrincipal : MonoBehaviour
     public void AbrirCreditos()
     {
         // Implementar depois
-        Debug.Log("CrÈditos");
+        Debug.Log("Cr√©ditos");
     }
 
     public void Sair()

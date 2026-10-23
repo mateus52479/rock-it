@@ -15,7 +15,7 @@ public class MaquinaDatabase : MonoBehaviour
             new MaquinaDados {
                 id        = "lixo",
                 nome      = "Lixo",
-                descricao = "Arraste uma pedra atÈ aqui para descart·-la.",
+                descricao = "Arraste uma pedra at√© aqui para descart√°-la.",
                 preco     = 50,
                 idUpgrade = "lixo_luxo"
             },
@@ -35,8 +35,8 @@ public class MaquinaDatabase : MonoBehaviour
             },
             new MaquinaDados {
                 id        = "quebrador",
-                nome      = "Quebrador Autom·tico",
-                descricao = "Coloque uma pedra aqui. Ela ser· quebrada automaticamente a 1 dano por segundo.",
+                nome      = "Quebrador Autom√°tico",
+                descricao = "Coloque uma pedra aqui. Ela ser√° quebrada automaticamente a 20% do seu dano por segundo.",
                 preco     = 300,
                 idUpgrade = ""
             },
@@ -49,8 +49,8 @@ public class MaquinaDatabase : MonoBehaviour
             },
             new MaquinaDados {
                 id        = "loja_cosmeticos",
-                nome      = "Loja de CosmÈticos",
-                descricao = "Compre skins para sua pedra de estimaÁ„o.",
+                nome      = "Loja de Cosm√©ticos",
+                descricao = "Compre skins para sua pedra de estima√ß√£o.",
                 preco     = 500,
                 idUpgrade = ""
             }
