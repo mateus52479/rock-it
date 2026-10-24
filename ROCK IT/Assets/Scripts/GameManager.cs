@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        TutorialBootstrap.Instalar();
     }
 
     void Update()

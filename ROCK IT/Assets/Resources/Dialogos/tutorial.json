@@ -1,0 +1,102 @@
+{
+  "_ajuda": "npcX/npcY são pixels a partir do centro da tela. Área visível em 1920x1080: x de -960 a 960, y de -540 a 540. esperar: clique | pergunta | abrirLoja | fecharLoja | comprarPedra | quebrarPedra | painelPedras | painelStatus | painelHabilidades | painelMaquinas. destacar: nome de um objeto da cena/UI, 'pedra' ou 'itemLoja'. Edite os textos à vontade.",
+  "passos": [
+    {
+      "id": "boas_vindas",
+      "personagem": "Mineiro",
+      "texto": "E aí! Primeira vez na mina? Quer que eu te explique como ganhar dinheiro aqui?",
+      "npcX": -700,
+      "npcY": -320,
+      "destacar": "",
+      "esperar": "pergunta",
+      "respostas": ["Quero", "Não, obrigado"]
+    },
+    {
+      "id": "abrir_loja",
+      "personagem": "Mineiro",
+      "texto": "Boa! Aquele computador ali no canto é a loja. Clica nele para comprar sua primeira pedra.",
+      "npcX": 700,
+      "npcY": 100,
+      "destacar": "Computador",
+      "esperar": "abrirLoja"
+    },
+    {
+      "id": "aba_pedras",
+      "personagem": "Mineiro",
+      "texto": "Essa é a aba de pedras. Cada uma tem um preço e um risco diferente. As mais caras podem pagar muito mais.",
+      "npcX": 600,
+      "npcY": -380,
+      "painel": "pedras",
+      "destacar": "BotaoPedras",
+      "esperar": "clique"
+    },
+    {
+      "id": "comprar_pedra",
+      "personagem": "Mineiro",
+      "texto": "A primeira Pedra Comum é grátis e ainda vem com o prêmio máximo. Compra ela para começar.",
+      "npcX": 600,
+      "npcY": -380,
+      "destacar": "itemLoja",
+      "esperar": "comprarPedra"
+    },
+    {
+      "id": "quebrar_pedra",
+      "personagem": "Mineiro",
+      "texto": "Agora clica na pedra até quebrar. Cada clique dá dano; quanto maior a sua Força, menos cliques você precisa.",
+      "npcX": -750,
+      "npcY": 300,
+      "destacar": "pedra",
+      "esperar": "quebrarPedra"
+    },
+    {
+      "id": "recompensa",
+      "personagem": "Mineiro",
+      "texto": "Pronto! Ao quebrar, a pedra paga o valor sorteado. Mas cuidado: às vezes ela vale menos do que você pagou.",
+      "npcX": -750,
+      "npcY": 300,
+      "destacar": "",
+      "esperar": "clique"
+    },
+    {
+      "id": "tour_status",
+      "personagem": "Mineiro",
+      "texto": "Na aba Status você sobe Força (dano), Sorte (chance do prêmio alto) e Fortuna (multiplica o lucro).",
+      "npcX": 600,
+      "npcY": -380,
+      "abrirLoja": true,
+      "painel": "status",
+      "destacar": "BotaoStatus",
+      "esperar": "clique"
+    },
+    {
+      "id": "tour_habilidades",
+      "personagem": "Mineiro",
+      "texto": "Nas Habilidades você compra bônus permanentes. Custam caro, mas mudam o jogo de verdade.",
+      "npcX": 600,
+      "npcY": -380,
+      "painel": "habilidades",
+      "destacar": "BotaoHabilidades",
+      "esperar": "clique"
+    },
+    {
+      "id": "tour_maquinas",
+      "personagem": "Mineiro",
+      "texto": "E nas Máquinas você automatiza a mina: lixo, scanner, quebrador e o inversor de polaridade.",
+      "npcX": 600,
+      "npcY": -380,
+      "painel": "maquinas",
+      "destacar": "BotaoMaquinas",
+      "esperar": "clique"
+    },
+    {
+      "id": "fim",
+      "personagem": "Mineiro",
+      "texto": "É isso! Vai juntando dinheiro até chegar no seu 1 BILHÃO. Boa sorte!",
+      "npcX": 0,
+      "npcY": -300,
+      "fecharLoja": true,
+      "destacar": "",
+      "esperar": "clique"
+    }
+  ]
+}

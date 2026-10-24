@@ -3,14 +3,34 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+/// <summary>
+/// Resumo de um slot para a tela de seleção (não vai para o JSON).
+/// </summary>
+public struct ResumoSlot
+{
+    public bool existe;
+    public float dinheiro;
+    public int nivelForca;
+    public System.DateTime data;
+}
+
 public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance;
 
-    private string caminhoSave;
+    public const int TotalSlots = 3;
+
+    /// <summary>Slot usado para salvar e carregar. Escolhido no menu.</summary>
+    public static int slotAtivo = 1;
+
+    /// <summary>Verdadeiro quando o jogador entrou por "Novo Jogo".</summary>
+    public static bool jogoNovo = false;
+
     private float timerAutoSave = 60f;
 
     private bool primeiraComumComprada = false;
+
+    private static bool migracaoFeita = false;
 
     void Awake()
     {
@@ -22,16 +42,22 @@ public class SaveManager : MonoBehaviour
 
         Instance = this;
 
-        caminhoSave = Path.Combine(
-            Application.persistentDataPath,
-            "save.json"
-        );
-
+        MigrarSaveAntigo();
         CarregarEstadoInicial();
+
+        // Partida nova: grava o slot logo no começo. Sem isso, se o jogador
+        // fechar o jogo antes da primeira compra, o slot escolhido nem existia
+        // e a partida se perdia.
+        if (jogoNovo)
+            timerAutoSave = 2f;
     }
 
     void Update()
     {
+        // No menu principal não existe partida para salvar.
+        if (GameManager.Instance == null)
+            return;
+
         timerAutoSave -= Time.deltaTime;
 
         if (timerAutoSave <= 0f)
@@ -41,10 +67,64 @@ public class SaveManager : MonoBehaviour
         }
     }
 
+    // --- CAMINHOS ---
+
+    public static string CaminhoSlot(int slot)
+    {
+        return Path.Combine(
+            Application.persistentDataPath,
+            "slot_" + slot + ".json"
+        );
+    }
+
+    string CaminhoSaveAtual()
+    {
+        return CaminhoSlot(slotAtivo);
+    }
+
+    // --- MIGRAÇÃO DO SAVE ANTIGO ---
+
+    /// <summary>
+    /// O jogo antigo tinha um único save.json. Na primeira execução ele vira
+    /// o slot 1 e o arquivo original é renomeado para backup.
+    /// </summary>
+    void MigrarSaveAntigo()
+    {
+        if (migracaoFeita) return;
+        migracaoFeita = true;
+
+        string antigo = Path.Combine(Application.persistentDataPath, "save.json");
+        string destino = CaminhoSlot(1);
+        string backup = Path.Combine(Application.persistentDataPath, "save_backup.json");
+
+        try
+        {
+            if (!File.Exists(antigo)) return;
+
+            if (!File.Exists(destino))
+                File.Copy(antigo, destino);
+
+            // Guarda uma cópia e remove o nome antigo para não migrar de novo
+            // caso o slot 1 seja apagado depois.
+            File.Copy(antigo, backup, true);
+            File.Delete(antigo);
+
+            Debug.Log("Save antigo migrado para o slot 1.");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Erro ao migrar o save antigo: " + e.Message);
+        }
+    }
+
+    // --- ESTADO INICIAL ---
+
     // Carrega o estado salvo sem depender dos outros managers.
     void CarregarEstadoInicial()
     {
-        if (!File.Exists(caminhoSave))
+        string caminho = CaminhoSaveAtual();
+
+        if (!File.Exists(caminho))
         {
             primeiraComumComprada = false;
             return;
@@ -52,7 +132,7 @@ public class SaveManager : MonoBehaviour
 
         try
         {
-            string json = File.ReadAllText(caminhoSave);
+            string json = File.ReadAllText(caminho);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
             primeiraComumComprada =
@@ -65,6 +145,90 @@ public class SaveManager : MonoBehaviour
             );
         }
     }
+
+    // --- SLOTS ---
+
+    public bool ExisteSlot(int slot)
+    {
+        return File.Exists(CaminhoSlot(slot));
+    }
+
+    public bool ExisteAlgumSlot()
+    {
+        for (int i = 1; i <= TotalSlots; i++)
+            if (ExisteSlot(i))
+                return true;
+
+        return false;
+    }
+
+    public ResumoSlot LerResumo(int slot)
+    {
+        string caminho = CaminhoSlot(slot);
+
+        if (!File.Exists(caminho))
+            return new ResumoSlot { existe = false };
+
+        try
+        {
+            string json = File.ReadAllText(caminho);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            return new ResumoSlot
+            {
+                existe = true,
+                dinheiro = data != null ? data.dinheiro : 0f,
+                nivelForca = data != null && data.status != null ? data.status.nivelForca : 1,
+                data = File.GetLastWriteTime(caminho)
+            };
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Erro ao ler o resumo do slot " + slot + ": " + e.Message);
+
+            return new ResumoSlot
+            {
+                existe = true,
+                nivelForca = 1,
+                data = File.GetLastWriteTime(caminho)
+            };
+        }
+    }
+
+    public void ApagarSlot(int slot)
+    {
+        string caminho = CaminhoSlot(slot);
+
+        try
+        {
+            if (File.Exists(caminho))
+                File.Delete(caminho);
+
+            Debug.Log("Slot " + slot + " apagado.");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Erro ao apagar o slot " + slot + ": " + e.Message);
+        }
+    }
+
+    /// <summary>Apaga o slot e marca a partida como nova.</summary>
+    public void IniciarNovoJogo(int slot)
+    {
+        slotAtivo = slot;
+        jogoNovo = true;
+        primeiraComumComprada = false;
+        ApagarSlot(slot);
+    }
+
+    /// <summary>Marca que o jogador vai continuar um slot existente.</summary>
+    public void IniciarContinuacao(int slot)
+    {
+        slotAtivo = slot;
+        jogoNovo = false;
+    }
+
+    // --- SALVAR / CARREGAR ---
 
     public void Salvar()
     {
@@ -132,9 +296,9 @@ public class SaveManager : MonoBehaviour
         try
         {
             string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(caminhoSave, json);
+            File.WriteAllText(CaminhoSaveAtual(), json);
 
-            Debug.Log("Jogo salvo em: " + caminhoSave);
+            Debug.Log("Jogo salvo no slot " + slotAtivo + ": " + CaminhoSaveAtual());
         }
         catch (System.Exception e)
         {
@@ -146,7 +310,7 @@ public class SaveManager : MonoBehaviour
 
     public bool TemSave()
     {
-        return File.Exists(caminhoSave);
+        return ExisteAlgumSlot();
     }
 
     public bool PrimeiraComumComprada()
@@ -170,9 +334,11 @@ public class SaveManager : MonoBehaviour
 
     public void Carregar()
     {
-        if (!TemSave())
+        string caminho = CaminhoSaveAtual();
+
+        if (!File.Exists(caminho))
         {
-            Debug.Log("Nenhum save encontrado.");
+            Debug.Log("Nenhum save encontrado no slot " + slotAtivo + ".");
             return;
         }
 
@@ -188,7 +354,7 @@ public class SaveManager : MonoBehaviour
 
         try
         {
-            string json = File.ReadAllText(caminhoSave);
+            string json = File.ReadAllText(caminho);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
             if (data == null)
@@ -257,11 +423,16 @@ public class SaveManager : MonoBehaviour
                         novaPedra.GetComponent<PedraManager>();
 
                     if (pm != null)
+                    {
                         pm.InicializarComVida(dados, ps.vidaAtual);
+
+                        // O Scanner precisa marcar as pedras recriadas.
+                        MaquinaScanner.NotificarNovaPedra(pm);
+                    }
                 }
             }
 
-            Debug.Log("Save carregado com sucesso.");
+            Debug.Log("Save carregado com sucesso do slot " + slotAtivo + ".");
         }
         catch (System.Exception e)
         {

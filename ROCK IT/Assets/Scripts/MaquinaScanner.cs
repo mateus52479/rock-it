@@ -4,6 +4,8 @@ public class MaquinaScanner : MonoBehaviour
 {
     private bool ativo = false;
 
+    public bool EstaAtivo() { return ativo; }
+
     public void Ativar()
     {
         ativo = true;
@@ -18,10 +20,13 @@ public class MaquinaScanner : MonoBehaviour
             p.AtualizarContornoScanner(ativo);
     }
 
-    // Chama isso quando uma nova pedra spawna
+    // Chama isso quando uma nova pedra spawna.
     public static void NotificarNovaPedra(PedraManager pedra)
     {
-        if (MaquinaManager.Instance.TemMaquina("scanner"))
+        if (pedra == null) return;
+
+        MaquinaManager manager = MaquinaManager.Instance;
+        if (manager != null && manager.TemMaquina("scanner"))
             pedra.AtualizarContornoScanner(true);
     }
 }

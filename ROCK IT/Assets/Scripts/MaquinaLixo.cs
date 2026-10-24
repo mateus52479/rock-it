@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MaquinaLixo : MonoBehaviour
+public class MaquinaLixo : MonoBehaviour, IMaquinaRecebedora
 {
     public SpriteRenderer spriteRenderer;
     public Color corLixoNormal = Color.gray;
@@ -9,22 +9,44 @@ public class MaquinaLixo : MonoBehaviour
     private string idAtual = "";
     private bool ativo = false;
 
+    void Awake()
+    {
+        GarantirSprite();
+    }
+
+    void GarantirSprite()
+    {
+        // O spriteRenderer pode vir vazio da cena; resolve pelo componente
+        // do próprio objeto para não estourar NullReferenceException.
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     public void Ativar(string id)
     {
+        GarantirSprite();
+
         idAtual = id;
         ativo = true;
         gameObject.SetActive(true);
-        spriteRenderer.color = id == "lixo_luxo" ? corLixoLuxo : corLixoNormal;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = id == "lixo_luxo" ? corLixoLuxo : corLixoNormal;
     }
 
-    // Chamado pelo PedraManager quando a pedra é solta em cima do lixo
+    public bool PodeReceber(PedraManager pedra)
+    {
+        return ativo;
+    }
+
+    // Chamado pelo PedraManager quando a pedra é solta em cima do lixo.
     public void ReceberPedra(PedraManager pedra)
     {
-        if (!ativo) return;
+        if (!ativo || pedra == null) return;
 
         if (idAtual == "lixo_luxo")
         {
-            // Recebe 25% do valor de compra da pedra
+            // Recebe 25% do valor de compra da pedra.
             float recompensa = pedra.GetPrecoCompra() * 0.25f;
             GameManager.Instance.AdicionarDinheiro(recompensa);
             Debug.Log("Lixo de Luxo: +" + recompensa);

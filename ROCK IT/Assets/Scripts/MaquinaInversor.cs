@@ -1,24 +1,42 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class MaquinaInversor : MonoBehaviour
+public class MaquinaInversor : MonoBehaviour, IMaquinaRecebedora
 {
     public SpriteRenderer spriteRenderer;
     private bool ativo = false;
 
+    void Awake()
+    {
+        GarantirSprite();
+    }
+
+    void GarantirSprite()
+    {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     public void Ativar()
     {
+        GarantirSprite();
+
         ativo = true;
         gameObject.SetActive(true);
     }
 
-    public void ReceberPedra(PedraManager pedra)
+    public bool PodeReceber(PedraManager pedra)
     {
-        if (!ativo) return;
-        StartCoroutine(InvertirPedra(pedra));
+        return ativo;
     }
 
-    IEnumerator InvertirPedra(PedraManager pedra)
+    public void ReceberPedra(PedraManager pedra)
+    {
+        if (!ativo || pedra == null) return;
+        StartCoroutine(InverterPedra(pedra));
+    }
+
+    IEnumerator InverterPedra(PedraManager pedra)
     {
         pedra.BloquearInteracao(true);
         pedra.transform.position = transform.position;
@@ -36,7 +54,7 @@ public class MaquinaInversor : MonoBehaviour
         }
 
         pedra.transform.position = pos;
-        pedra.InvertерValores();
+        pedra.InverterValores();
         pedra.BloquearInteracao(false);
 
         // Solta por perto

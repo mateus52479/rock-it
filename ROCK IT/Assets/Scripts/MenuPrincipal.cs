@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MenuPrincipal : MonoBehaviour
@@ -8,20 +7,26 @@ public class MenuPrincipal : MonoBehaviour
 
     void Start()
     {
-        // Desativa continuar se não tiver save
-        if (botaoContinuar != null)
-            botaoContinuar.interactable = SaveManager.Instance.TemSave();
+        AtualizarBotaoContinuar();
+    }
+
+    public void AtualizarBotaoContinuar()
+    {
+        if (botaoContinuar != null && SaveManager.Instance != null)
+            botaoContinuar.interactable = SaveManager.Instance.ExisteAlgumSlot();
     }
 
     public void NovoJogo()
     {
-        SceneManager.LoadScene("Jogo");
+        SlotSaveUI.Abrir(SlotSaveUI.Modo.NovoJogo);
     }
 
     public void ContinuarJogo()
     {
-        GameLoader.deveCarregar = true;
-        SceneManager.LoadScene("Jogo");
+        if (SaveManager.Instance == null || !SaveManager.Instance.ExisteAlgumSlot())
+            return;
+
+        SlotSaveUI.Abrir(SlotSaveUI.Modo.Continuar);
     }
 
     public void AbrirConfiguracoes()

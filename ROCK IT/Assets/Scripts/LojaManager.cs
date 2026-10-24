@@ -7,6 +7,15 @@ public class LojaManager : MonoBehaviour
 {
     public static LojaManager Instance;
 
+    /// <summary>Disparado quando uma pedra é comprada com sucesso.</summary>
+    public static event System.Action<PedraDados> OnPedraComprada;
+
+    /// <summary>Disparado quando a loja abre ou fecha (usado pelo tutorial).</summary>
+    public static event System.Action OnLojaAberta;
+    public static event System.Action OnLojaFechada;
+
+    public static bool LojaAberta { get; private set; }
+
     [Header("Loja UI")]
     public GameObject painelLoja;
     public Transform containerItens;
@@ -19,6 +28,8 @@ public class LojaManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        LojaAberta = false;
 
         if (painelLoja != null)
             painelLoja.SetActive(false);
@@ -33,12 +44,22 @@ public class LojaManager : MonoBehaviour
     {
         if (painelLoja != null)
             painelLoja.SetActive(true);
+
+        LojaAberta = true;
+
+        if (OnLojaAberta != null)
+            OnLojaAberta();
     }
 
     public void FecharLoja()
     {
         if (painelLoja != null)
             painelLoja.SetActive(false);
+
+        LojaAberta = false;
+
+        if (OnLojaFechada != null)
+            OnLojaFechada();
     }
 
     void PopularLoja()
@@ -98,20 +119,28 @@ public class LojaManager : MonoBehaviour
             pedra.nome == "Pedra Comum" &&
             !SaveManager.Instance.PrimeiraComumComprada();
 
-        // A primeira Pedra Comum é gratuita.
-        int preco = primeiraComum ? 0 : pedra.precoCompra;
+        // Pedra de socorro: o jogador está sem dinheiro e sem pedras na
+        // mesa. Em vez de o jogo gerar uma pedra do nada, a pedra mais
+        // barata fica grátis na loja e o próprio jogador compra.
+        bool socorro =
+            !primeiraComum &&
+            pedra == PedraMaisBarata() &&
+            CalcularSemSaida();
+
+        // A primeira Pedra Comum é gratuita, e a de socorro também.
+        int preco = (primeiraComum || socorro) ? 0 : pedra.precoCompra;
 
         // Desconto Universitário: reduz o preço em 25%.
-        if (!primeiraComum &&
+        if (!primeiraComum && !socorro &&
             StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
             preco = Mathf.RoundToInt(preco * 0.75f);
         }
 
         // Cashback: 50% de chance de tornar a compra gratuita.
-        bool gratis = gratisForcado;
+        bool gratis = gratisForcado || socorro;
 
-        if (!primeiraComum &&
+        if (!primeiraComum && !socorro &&
             StatusManager.Instance.TemHabilidade("cashback"))
         {
             if (Random.value < 0.5f)
@@ -162,7 +191,17 @@ public class LojaManager : MonoBehaviour
 
         if (!gratisForcado)
             FecharLoja();
+
+        if (OnPedraComprada != null)
+            OnPedraComprada(pedra);
     }
+
+    /// <summary>
+    /// Verdadeiro quando o jogador não tem dinheiro nem pedras na mesa.
+    /// Nessa situação a pedra mais barata fica grátis na loja, em vez de o
+    /// jogo gerar uma pedra do nada.
+    /// </summary>
+    public static bool EstaSemSaida { get; private set; }
 
     private float proximaVerificacaoResgate = 0f;
 
@@ -171,25 +210,52 @@ public class LojaManager : MonoBehaviour
         if (Time.unscaledTime < proximaVerificacaoResgate) return;
         proximaVerificacaoResgate = Time.unscaledTime + 1f;
 
-        if (GameManager.Instance == null ||
-            PedraDatabase.Instance == null ||
-            prefabPedra == null)
-            return;
+        EstaSemSaida = CalcularSemSaida();
+    }
 
-        if (GameManager.Instance.dinheiro >= 1f)
-            return;
+    static bool CalcularSemSaida()
+    {
+        if (GameManager.Instance == null || PedraDatabase.Instance == null)
+            return false;
 
-        // Sem dinheiro e sem nenhuma pedra na mesa: o jogador ficaria
-        // travado para sempre. Dá uma Pedra Comum de socorro.
+        PedraDados maisBarata = PedraMaisBarata();
+
+        if (maisBarata != null &&
+            GameManager.Instance.dinheiro >= maisBarata.precoCompra)
+            return false;
+
+        // Ainda tem pedra na mesa? Então o jogador consegue dinheiro sozinho.
         PedraManager[] pedrasNaMesa =
             FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
 
-        if (pedrasNaMesa.Length > 0)
-            return;
+        return pedrasNaMesa.Length == 0;
+    }
 
-        PedraDados comum = PedraDatabase.Instance.todasAsPedras[0];
+    static PedraDados PedraMaisBarata()
+    {
+        if (PedraDatabase.Instance == null) return null;
 
-        if (comum != null)
-            ComprarPedra(comum, true);
+        PedraDados[] todas = PedraDatabase.Instance.todasAsPedras;
+
+        if (todas == null || todas.Length == 0) return null;
+
+        PedraDados maisBarata = todas[0];
+
+        foreach (PedraDados p in todas)
+            if (p != null && p.precoCompra < maisBarata.precoCompra)
+                maisBarata = p;
+
+        return maisBarata;
+    }
+
+    /// <summary>
+    /// A pedra mais barata fica grátis enquanto o jogador está sem saída.
+    /// Usado pela loja para mostrar "Grátis" no item.
+    /// </summary>
+    public static bool EhPedraDeSocorro(PedraDados pedra)
+    {
+        if (pedra == null || !EstaSemSaida) return false;
+
+        return pedra == PedraMaisBarata();
     }
 }

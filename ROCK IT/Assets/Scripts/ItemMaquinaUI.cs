@@ -32,15 +32,30 @@ public class ItemMaquinaUI : MonoBehaviour
     {
         if (dados == null) return;
 
+        // Máquina ainda não implementada: aparece na loja, mas não dá para comprar.
+        if (!dados.disponivel)
+        {
+            textoBotao.text = "Em breve";
+            textoPreco.text = "—";
+            textoPreco.color = Color.gray;
+            botaoAcao.interactable = false;
+            return;
+        }
+
         bool comprada = MaquinaManager.Instance.TemMaquina(dados.id);
 
-        if (comprada)
+        // Se o upgrade desta máquina já foi comprado, ela conta como
+        // evoluída: não pode voltar a oferecer "Comprar" e rebaixar.
+        bool temUpgrade = !string.IsNullOrEmpty(dados.idUpgrade) &&
+                          MaquinaManager.Instance.TemMaquina(dados.idUpgrade);
+
+        if (comprada && !temUpgrade)
         {
             // Verifica se tem upgrade disponível
             if (!string.IsNullOrEmpty(dados.idUpgrade))
             {
                 MaquinaDados upgrade = MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
-                if (upgrade != null && !MaquinaManager.Instance.TemMaquina(dados.idUpgrade))
+                if (upgrade != null && upgrade.disponivel)
                 {
                     textoBotao.text = "Evoluir";
                     textoPreco.text = "R$ " + upgrade.preco;
@@ -52,6 +67,13 @@ public class ItemMaquinaUI : MonoBehaviour
                 }
             }
 
+            textoBotao.text = "Comprado";
+            textoPreco.text = "✓";
+            textoPreco.color = new Color(0.2f, 0.9f, 0.2f);
+            botaoAcao.interactable = false;
+        }
+        else if (comprada || temUpgrade)
+        {
             textoBotao.text = "Comprado";
             textoPreco.text = "✓";
             textoPreco.color = new Color(0.2f, 0.9f, 0.2f);
@@ -72,10 +94,16 @@ public class ItemMaquinaUI : MonoBehaviour
     {
         bool comprada = MaquinaManager.Instance.TemMaquina(dados.id);
 
+        bool temUpgrade = !string.IsNullOrEmpty(dados.idUpgrade) &&
+                          MaquinaManager.Instance.TemMaquina(dados.idUpgrade);
+
+        if (temUpgrade)
+            return;
+
         if (comprada && !string.IsNullOrEmpty(dados.idUpgrade))
         {
             MaquinaDados upgrade = MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
-            if (upgrade != null)
+            if (upgrade != null && upgrade.disponivel)
                 MaquinaManager.Instance.ComprarMaquina(upgrade);
         }
         else

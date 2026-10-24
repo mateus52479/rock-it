@@ -1,0 +1,45 @@
+COMO EDITAR O TUTORIAL
+======================
+
+O roteiro fica no arquivo tutorial.json, nesta mesma pasta.
+Cada item de "passos" é uma fala do NPC. Para editar, mude apenas os textos
+entre aspas. Não apague as vírgulas.
+
+Campos de cada passo
+--------------------
+personagem  Nome que aparece no topo do balão.
+texto       A fala. Pode ser longa.
+npcX/npcY   Onde o NPC para, em pixels a partir do centro da tela.
+            A tela em 1920x1080 vai de -960 a 960 (x) e -540 a 540 (y).
+            O balão aparece sozinho ao lado do NPC.
+destacar    Nome de um objeto da cena para piscar em amarelo.
+            Use "" (vazio) para não destacar nada.
+            Aceita "Computador", "Pedra", "BotaoPedras", "BotaoStatus",
+            "BotaoHabilidades", "BotaoMaquinas", "itemLoja" (primeiro item
+            da loja) e "pedra" (primeira pedra na mesa).
+esperar     O que o tutorial aguarda antes de ir para a próxima fala:
+            clique          = jogador clica em "Continuar"
+            pergunta        = jogador escolhe uma das "respostas"
+            abrirLoja       = jogador abre a loja (clica no computador)
+            fecharLoja      = jogador fecha a loja
+            comprarPedra    = jogador compra qualquer pedra
+            quebrarPedra    = jogador quebra uma pedra
+            painelPedras / painelStatus / painelHabilidades / painelMaquinas
+                            = jogador abre aquela aba
+respostas   Só para "pergunta". Ex.: ["Sim", "Não"].
+pularPara   Só para "pergunta". Se a resposta escolhida não for a primeira,
+            o tutorial salta para o passo com este id. Vazio encerra.
+
+Ações automáticas antes da fala
+-------------------------------
+abrirLoja   true = abre a loja sozinho.
+fecharLoja  true = fecha a loja sozinho.
+painel      "pedras", "status", "habilidades" ou "maquinas" = troca a aba
+            sozinho (a loja precisa estar aberta).
+
+Dicas
+-----
+- Para acrescentar uma fala, copie um bloco { ... } inteiro, cole antes do
+  último e separe com vírgula. Dê um "id" diferente.
+- Para remover uma fala, apague o bloco inteiro (e a vírgula que sobra).
+- O botão "Pular tutorial" fica sempre visível durante o tutorial.

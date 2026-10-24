@@ -4,6 +4,9 @@ using TMPro;
 
 public class PedraManager : MonoBehaviour
 {
+    /// <summary>Disparado quando uma pedra é destruída (antes do Destroy).</summary>
+    public static event System.Action<PedraManager> OnPedraDestruida;
+
     [Header("Referências")]
     public TextMeshPro vidaText;
 
@@ -148,6 +151,10 @@ public class PedraManager : MonoBehaviour
         if (spriteA != null)
             spriteRenderer.sprite = spriteA;
 
+        // O contorno do Scanner é um sprite separado: acompanha o dano.
+        if (contornoScanner != null && contornoScanner.enabled)
+            contornoScanner.sprite = spriteA;
+
         parAtual[0] = spriteA;
         parAtual[1] = dados.animarFrames ? spriteB : null;
         frameAtual = 0;
@@ -237,18 +244,36 @@ public class PedraManager : MonoBehaviour
             arrastando = false;
             segurando = false;
 
-            Collider2D[] colisoes = Physics2D.OverlapCircleAll(transform.position, 0.5f);
+            Collider2D[] colisoes = Physics2D.OverlapCircleAll(transform.position, 1.3f);
+
+            // Escolhe a máquina ativa mais próxima do ponto onde a pedra foi
+            // solta. Antes o primeiro collider da lista vencia e, como todas
+            // estavam empilhadas, só o Lixo recebia.
+            IMaquinaRecebedora maquinaEscolhida = null;
+            float menorDistancia = float.MaxValue;
+
             foreach (Collider2D col in colisoes)
             {
-                MaquinaLixo lixo = col.GetComponent<MaquinaLixo>();
-                if (lixo != null) { lixo.ReceberPedra(this); return; }
+                IMaquinaRecebedora maquina = col.GetComponent<IMaquinaRecebedora>();
+                if (maquina == null || !maquina.PodeReceber(this))
+                    continue;
 
-                MaquinaQuebrador quebrador = col.GetComponent<MaquinaQuebrador>();
-                if (quebrador != null) { quebrador.ReceberPedra(this); return; }
+                // Distância até a borda do collider: fica generoso com
+                // sprites pequenos sem favorecer uma máquina só porque o
+                // pivô dela está mais perto.
+                Vector2 ponto = col.bounds.ClosestPoint(transform.position);
+                float distancia = Vector2.Distance(ponto, transform.position);
 
-                MaquinaInversor inversor = col.GetComponent<MaquinaInversor>();
-                if (inversor != null) { inversor.ReceberPedra(this); return; }
+                if (distancia < menorDistancia)
+                {
+                    menorDistancia = distancia;
+                    maquinaEscolhida = maquina;
+                }
             }
+
+            if (maquinaEscolhida != null)
+                maquinaEscolhida.ReceberPedra(this);
+
             return;
         }
 
@@ -463,50 +488,81 @@ public class PedraManager : MonoBehaviour
 
     void PedraDestruida()
     {
-        float recompensaFinal;
-
-        if (garantirMaximo)
-        {
-            int maiorValor = int.MinValue;
-            foreach (ValorPedra vp in dados.tabelaValores)
-                if (vp.valor > maiorValor) maiorValor = vp.valor;
-
-            recompensaFinal = maiorValor;
-        }
-        else
-        {
-            int nivelSorte = StatusManager.Instance.nivelSorte;
-            int recompensaBase = dados.SortearValor(nivelSorte);
-
-            int maiorValor = int.MinValue;
-            foreach (ValorPedra vp in dados.tabelaValores)
-                if (vp.valor > maiorValor) maiorValor = vp.valor;
-
-            if (StatusManager.Instance.TemHabilidade("trevo_quatro_folhas"))
-                if (recompensaBase >= maiorValor)
-                    recompensaBase *= 2;
-
-            if (StatusManager.Instance.TemHabilidade("analista_profissional"))
-                if (Random.value < 0.1f)
-                    recompensaBase = maiorValor;
-
-            // Fortuna multiplica apenas o lucro. Se o resultado da pedra for
-            // negativo, o multiplicador não pode aumentar o prejuízo.
-            float fortuna = StatusManager.Instance.GetMultiplicadorFortuna();
-            recompensaFinal = recompensaBase > 0
-                ? recompensaBase * fortuna
-                : recompensaBase;
-
-            if (StatusManager.Instance.TemHabilidade("buque_trevos"))
-                recompensaFinal *= 1.5f;
-
-            if (valorInvertido)
-                recompensaFinal *= -1f;
-        }
+        float recompensaFinal = CalcularRecompensa();
 
         GameManager.Instance.AdicionarDinheiro(recompensaFinal);
         Debug.Log("Recompensa: R$ " + recompensaFinal.ToString("F2"));
+
+        if (OnPedraDestruida != null)
+            OnPedraDestruida(this);
+
         Destroy(gameObject);
+    }
+
+    float CalcularRecompensa()
+    {
+        int maiorValor = MaiorValorDaTabela();
+
+        if (garantirMaximo)
+            return valorInvertido
+                ? -maiorValor + dados.precoCompra
+                : maiorValor;
+
+        int nivelSorte = StatusManager.Instance.nivelSorte;
+        int recompensaBase = dados.SortearValor(nivelSorte);
+
+        if (valorInvertido)
+            return CalcularRecompensaInvertida(recompensaBase);
+
+        if (StatusManager.Instance.TemHabilidade("trevo_quatro_folhas"))
+            if (recompensaBase >= maiorValor)
+                recompensaBase *= 2;
+
+        if (StatusManager.Instance.TemHabilidade("analista_profissional"))
+            if (Random.value < 0.1f)
+                recompensaBase = maiorValor;
+
+        float recompensa = recompensaBase;
+
+        // Fortuna multiplica apenas o lucro. Se o resultado da pedra for
+        // negativo, o multiplicador não pode aumentar o prejuízo.
+        if (recompensa > 0f)
+            recompensa *= StatusManager.Instance.GetMultiplicadorFortuna();
+
+        if (StatusManager.Instance.TemHabilidade("buque_trevos"))
+            recompensa *= 1.5f;
+
+        return recompensa;
+    }
+
+    /// <summary>
+    /// O Inversor troca o sinal do valor e soma o preço pago de volta, então
+    /// a média fica neutra ("justa"). Fortuna e buquê continuam valendo só
+    /// sobre o lucro, para não aumentar o prejuízo.
+    /// </summary>
+    float CalcularRecompensaInvertida(int recompensaBase)
+    {
+        float recompensa = -recompensaBase + dados.precoCompra;
+
+        if (recompensa > 0f)
+        {
+            recompensa *= StatusManager.Instance.GetMultiplicadorFortuna();
+
+            if (StatusManager.Instance.TemHabilidade("buque_trevos"))
+                recompensa *= 1.5f;
+        }
+
+        return recompensa;
+    }
+
+    int MaiorValorDaTabela()
+    {
+        int maiorValor = int.MinValue;
+
+        foreach (ValorPedra vp in dados.tabelaValores)
+            if (vp.valor > maiorValor) maiorValor = vp.valor;
+
+        return maiorValor;
     }
 
     public void BloquearInteracao(bool bloquear)
@@ -549,7 +605,7 @@ public class PedraManager : MonoBehaviour
             : new Color(0.9f, 0.2f, 0.2f, 0.5f);
     }
 
-    public void InvertерValores()
+    public void InverterValores()
     {
         valorInvertido = !valorInvertido;
     }

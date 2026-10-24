@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class MaquinaQuebrador : MonoBehaviour
+public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
 {
     public SpriteRenderer spriteRenderer;
     public Color corVazia = Color.white;
@@ -15,21 +15,46 @@ public class MaquinaQuebrador : MonoBehaviour
     private PedraManager pedraAtual = null;
     private int ataquesPorSegundo = 1;
 
+    void Awake()
+    {
+        GarantirSprite();
+    }
+
+    void GarantirSprite()
+    {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     public void Ativar()
     {
+        GarantirSprite();
+
         ativo = true;
         gameObject.SetActive(true);
-        spriteRenderer.color = corVazia;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = corVazia;
+    }
+
+    public bool PodeReceber(PedraManager pedra)
+    {
+        return ativo && pedraAtual == null;
     }
 
     public void ReceberPedra(PedraManager pedra)
     {
-        if (!ativo || pedraAtual != null) return;
+        if (pedra == null || !PodeReceber(pedra)) return;
+
+        GarantirSprite();
 
         pedraAtual = pedra;
         pedra.transform.position = transform.position;
         pedra.BloquearInteracao(true);
-        spriteRenderer.color = corOcupada;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = corOcupada;
+
         StartCoroutine(QuebrarAutomaticamente());
     }
 
@@ -50,7 +75,9 @@ public class MaquinaQuebrador : MonoBehaviour
             if (destruida)
             {
                 pedraAtual = null;
-                spriteRenderer.color = corVazia;
+
+                if (spriteRenderer != null)
+                    spriteRenderer.color = corVazia;
             }
         }
     }

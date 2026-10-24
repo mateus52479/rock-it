@@ -44,15 +44,19 @@ public class ItemLoja : MonoBehaviour
             SaveManager.Instance != null &&
             !SaveManager.Instance.PrimeiraComumComprada();
 
+        // Sem dinheiro e sem pedras na mesa, a pedra mais barata fica grátis
+        // (socorro), em vez de o jogo gerar uma pedra sozinho.
+        bool gratis = primeiraGratis || LojaManager.EhPedraDeSocorro(dados);
+
         int preco = dados.precoCompra;
 
-        if (!primeiraGratis &&
+        if (!gratis &&
             StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
             preco = Mathf.RoundToInt(preco * 0.75f);
         }
 
-        string texto = primeiraGratis
+        string texto = gratis
             ? "Grátis"
             : "R$ " + NumeroUtil.Formatar(preco, 0);
 
@@ -63,7 +67,7 @@ public class ItemLoja : MonoBehaviour
             textoPreco.text = texto;
         }
 
-        textoPreco.color = (primeiraGratis || preco == 0 || GameManager.Instance.dinheiro >= preco)
+        textoPreco.color = (gratis || preco == 0 || GameManager.Instance.dinheiro >= preco)
             ? corPodeComprar
             : corSemDinheiro;
     }
