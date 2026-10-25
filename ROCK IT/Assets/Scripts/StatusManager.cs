@@ -105,7 +105,6 @@ public class StatusManager : MonoBehaviour
         float custo = GetCustoProximoNivelSorte();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelSorte++;
-        MaquinaScanner.AtualizarTodosContornos();
         return true;
     }
 
@@ -136,7 +135,6 @@ public class StatusManager : MonoBehaviour
         float custo = GetCustoProximoNivelFortuna();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelFortuna++;
-        MaquinaScanner.AtualizarTodosContornos();
         return true;
     }
 
@@ -172,11 +170,9 @@ public class StatusManager : MonoBehaviour
                 break;
             case TipoHabilidade.Sorte:
                 nivelSorte += Mathf.RoundToInt(hab.valorBonus);
-                MaquinaScanner.AtualizarTodosContornos();
                 break;
             case TipoHabilidade.Fortuna:
                 nivelFortuna += Mathf.RoundToInt(hab.valorBonus);
-                MaquinaScanner.AtualizarTodosContornos();
                 break;
         }
 

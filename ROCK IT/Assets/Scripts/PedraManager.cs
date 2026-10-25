@@ -51,6 +51,12 @@ public class PedraManager : MonoBehaviour
     private bool garantirMaximo = false;
     private SpriteRenderer contornoScanner;
 
+    /// <summary>
+    /// Resultado sorteado quando a pedra aparece. Fica guardado para o Scanner
+    /// poder dizer se o valor é positivo ou negativo sem "mentir" depois.
+    /// </summary>
+    private int resultadoSorteado = 0;
+
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -81,6 +87,7 @@ public class PedraManager : MonoBehaviour
         dados = d;
         vidaAtual = d.vidaMaxima;
         this.garantirMaximo = garantirMaximo;
+        resultadoSorteado = SortearResultado(d);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -106,6 +113,7 @@ public class PedraManager : MonoBehaviour
         dados = d;
         vidaAtual = vida;
         garantirMaximo = false;
+        resultadoSorteado = SortearResultado(d);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -510,8 +518,9 @@ public class PedraManager : MonoBehaviour
                 ? -maiorValor + dados.precoCompra
                 : maiorValor;
 
-        int nivelSorte = StatusManager.Instance.nivelSorte;
-        int recompensaBase = dados.SortearValor(nivelSorte);
+        // Usa o resultado sorteado quando a pedra apareceu. É o mesmo que o
+        // Scanner mostrou, então a borda nunca contradiz a recompensa.
+        int recompensaBase = resultadoSorteado;
 
         if (valorInvertido)
             return CalcularRecompensaInvertida(recompensaBase);
@@ -567,6 +576,22 @@ public class PedraManager : MonoBehaviour
         return maiorValor;
     }
 
+    /// <summary>
+    /// Sorteia o resultado uma única vez, quando a pedra aparece, para o
+    /// Scanner poder mostrar verde/vermelho sem revelar errado.
+    /// </summary>
+    static int SortearResultado(PedraDados pedra)
+    {
+        if (pedra == null || pedra.tabelaValores == null || pedra.tabelaValores.Length == 0)
+            return 0;
+
+        int nivelSorte = StatusManager.Instance != null
+            ? StatusManager.Instance.nivelSorte
+            : 1;
+
+        return pedra.SortearValor(nivelSorte);
+    }
+
     public void BloquearInteracao(bool bloquear)
     {
         interacaoBloqueada = bloquear;
@@ -574,13 +599,9 @@ public class PedraManager : MonoBehaviour
         if (corpo != null) corpo.isKinematic = bloquear;
     }
 
-    [Header("Scanner (cor do contorno)")]
-    [Tooltip("Margem de empate: dentro de ±2% do preço a pedra é considerada 'empate' (amarelo).")]
-    public float margemScanner = 0.02f;
-
-    public Color corScannerLucro = new Color(0.2f, 0.9f, 0.2f, 0.55f);
-    public Color corScannerEmpate = new Color(1f, 0.85f, 0.2f, 0.55f);
-    public Color corScannerPrejuizo = new Color(0.9f, 0.2f, 0.2f, 0.55f);
+    [Header("Scanner")]
+    public Color corScannerLucro = new Color(0.2f, 0.9f, 0.2f, 0.6f);
+    public Color corScannerPrejuizo = new Color(0.9f, 0.2f, 0.2f, 0.6f);
 
     public void AtualizarContornoScanner(bool ativo)
     {
@@ -595,11 +616,21 @@ public class PedraManager : MonoBehaviour
         {
             GameObject contorno = new GameObject("Contorno");
             contorno.transform.SetParent(transform);
-            contorno.transform.localPosition = Vector3.zero;
+
+            // Um pouquinho atrás da pedra no eixo Z: com a mesma ordem de
+            // desenho (0) ele fica acima da mesa (-1), mas continua atrás da
+            // pedra — antes ele usava ordem -1 e sumia atrás da mesa.
+            contorno.transform.localPosition = new Vector3(0f, 0f, 0.02f);
             contorno.transform.localScale = Vector3.one * 1.2f;
+
             contornoScanner = contorno.AddComponent<SpriteRenderer>();
             contornoScanner.sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
-            contornoScanner.sortingOrder = -1;
+            contornoScanner.sortingLayerID = spriteRenderer != null
+                ? spriteRenderer.sortingLayerID
+                : 0;
+            contornoScanner.sortingOrder = spriteRenderer != null
+                ? spriteRenderer.sortingOrder
+                : 0;
         }
 
         contornoScanner.enabled = true;
@@ -607,27 +638,40 @@ public class PedraManager : MonoBehaviour
         if (dados == null || dados.tabelaValores == null)
             return;
 
-        // A cor compara a recompensa média (com Sorte e Fortuna atuais) com o
-        // preço. A margem existe porque as tabelas são arredondadas: sem ela,
-        // uma diferença de 0,1 (0,4%) já pintava a pedra de verde ou vermelho.
-        float valorEsperado = dados.ValorEsperado(
-            StatusManager.Instance.nivelSorte,
-            StatusManager.Instance.GetMultiplicadorFortuna());
+        // O resultado já foi sorteado quando a pedra apareceu: verde quando
+        // ela vai pagar um valor positivo, vermelho quando for zero/negativo.
+        contornoScanner.color = RecompensaBasePrevista() > 0f
+            ? corScannerLucro
+            : corScannerPrejuizo;
+    }
 
-        float preco = dados.precoCompra;
-        float margem = Mathf.Abs(preco) * Mathf.Max(0f, margemScanner);
+    /// <summary>
+    /// Valor que a pedra vai render (antes de Fortuna/trevo, que só
+    /// multiplicam resultados positivos), já considerando o Inversor.
+    /// </summary>
+    float RecompensaBasePrevista()
+    {
+        if (dados == null) return 0f;
 
-        if (valorEsperado > preco + margem)
-            contornoScanner.color = corScannerLucro;      // lucro médio
-        else if (valorEsperado < preco - margem)
-            contornoScanner.color = corScannerPrejuizo;   // prejuízo médio
-        else
-            contornoScanner.color = corScannerEmpate;     // empata no longo prazo
+        if (garantirMaximo)
+        {
+            int maior = MaiorValorDaTabela();
+            return valorInvertido ? -maior + dados.precoCompra : maior;
+        }
+
+        return valorInvertido
+            ? -resultadoSorteado + dados.precoCompra
+            : resultadoSorteado;
     }
 
     public void InverterValores()
     {
         valorInvertido = !valorInvertido;
+
+        // O Inversor troca o sinal da recompensa: a cor do Scanner
+        // precisa ser recalculada.
+        if (contornoScanner != null && contornoScanner.enabled)
+            AtualizarContornoScanner(true);
     }
 
     public int GetPrecoCompra()
