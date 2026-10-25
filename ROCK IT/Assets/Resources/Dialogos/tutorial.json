@@ -1,5 +1,5 @@
 {
-  "_ajuda": "npcX/npcY são pixels a partir do centro da tela. Área visível em 1920x1080: x de -960 a 960, y de -540 a 540. esperar: clique | pergunta | abrirLoja | fecharLoja | comprarPedra | quebrarPedra | painelPedras | painelStatus | painelHabilidades | painelMaquinas. destacar: nome de um objeto da cena/UI, 'pedra' ou 'itemLoja'. Edite os textos à vontade.",
+  "_ajuda": "npcX/npcY são pixels a partir do centro da tela. Área visível em 1920x1080: x de -960 a 960, y de -540 a 540. tamanhoTexto: tamanho da fonte só desta fala (0 = padrão). esperar: clique | pergunta | abrirLoja | fecharLoja | comprarPedra | quebrarPedra | painelPedras | painelStatus | painelHabilidades | painelMaquinas. destacar: nome de um objeto da cena/UI, 'pedra' ou 'itemLoja'. Edite os textos à vontade.",
   "passos": [
     {
       "id": "boas_vindas",

@@ -14,6 +14,11 @@ public class BalaoDialogo : MonoBehaviour
 
     public TextMeshProUGUI textoNome;
     public TextMeshProUGUI texto;
+
+    [Header("Tamanho do texto")]
+    [Tooltip("Tamanho padrão da fonte das falas. Mude aqui para aumentar ou diminuir todas de uma vez.")]
+    public float tamanhoFonteTexto = 30f;
+
     public Button botaoContinuar;
     public RectTransform containerRespostas;
 
@@ -48,7 +53,7 @@ public class BalaoDialogo : MonoBehaviour
 
         balao.texto = UIUtil.CriarTexto(
             fundo.transform, "Texto", "",
-            21f, new Vector2(440f, 110f), new Vector2(0f, 20f),
+            balao.tamanhoFonteTexto, new Vector2(440f, 110f), new Vector2(0f, 20f),
             TextAlignmentOptions.TopLeft);
 
         balao.botaoContinuar = UIUtil.CriarBotao(
@@ -95,6 +100,17 @@ public class BalaoDialogo : MonoBehaviour
             area.yMax - altura / 2f - 10f);
 
         painel.anchoredPosition = new Vector2(x, y);
+    }
+
+    /// <summary>
+    /// Define o tamanho da fonte desta fala. Passe 0 para voltar ao
+    /// tamanho padrão configurado em tamanhoFonteTexto.
+    /// </summary>
+    public void DefinirTamanhoTexto(float tamanho)
+    {
+        if (texto == null) return;
+
+        texto.fontSize = tamanho > 0f ? tamanho : tamanhoFonteTexto;
     }
 
     public IEnumerator Digitar(string personagem, string conteudo)

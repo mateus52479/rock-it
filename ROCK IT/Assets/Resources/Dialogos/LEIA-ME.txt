@@ -9,6 +9,9 @@ Campos de cada passo
 --------------------
 personagem  Nome que aparece no topo do balão.
 texto       A fala. Pode ser longa.
+tamanhoTexto  Tamanho da fonte só desta fala. Deixe 0 para usar o padrão.
+            Para mudar todas as falas de uma vez, abra
+            Assets/Scripts/BalaoDialogo.cs e altere "tamanhoFonteTexto" (padrão 21).
 npcX/npcY   Onde o NPC para, em pixels a partir do centro da tela.
             A tela em 1920x1080 vai de -960 a 960 (x) e -540 a 540 (y).
             O balão aparece sozinho ao lado do NPC.

@@ -106,6 +106,8 @@ public class DialogoManager : MonoBehaviour
 
             destaque.Destacar(passo.destacar);
 
+            balao.DefinirTamanhoTexto(passo.tamanhoTexto);
+
             yield return balao.Digitar(passo.personagem, passo.texto);
 
             if (passo.esperar == "pergunta")

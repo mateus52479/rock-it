@@ -8,6 +8,9 @@ public class PassoDialogo
     public string personagem;
     public string texto;
 
+    [Tooltip("Tamanho da fonte só desta fala. Deixe 0 para usar o tamanho padrão do balão.")]
+    public float tamanhoTexto;
+
     [Header("Posição do NPC (pixels a partir do centro da tela)")]
     public float npcX;
     public float npcY;

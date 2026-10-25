@@ -10,9 +10,18 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textoDinheiro;
     public TextMeshProUGUI textoDiferenca; // texto do +X ou -X ao lado
 
+    [Header("Animação do contador")]
+    [Tooltip("Duração da animação para valores pequenos (em segundos).")]
+    public float duracaoMinima = 0.25f;
+
+    [Tooltip("Duração máxima da animação, mesmo para valores muito altos (em segundos).")]
+    public float duracaoMaxima = 1.2f;
+
     private float dinheiroExibido = 0f;
-    private float velocidadeContador = 5f; // quão rápido o contador sobe/desce
-    private Coroutine corotinaContador;
+    private float alvoAnimacao = 0f;
+    private float inicioAnimacao = 0f;
+    private float tempoAnimacao = 0f;
+    private float duracaoAnimacao = 0f;
     private Coroutine corotinaDiferenca;
 
     void Awake()
@@ -21,20 +30,68 @@ public class GameManager : MonoBehaviour
         TutorialBootstrap.Instalar();
     }
 
+    void Start()
+    {
+        AtualizarHUD();
+    }
+
     void Update()
     {
-        if (Mathf.Abs(dinheiroExibido - dinheiro) > 0.01f)
+        // O valor mudou (recompensa, compra, carregamento)? Recomeça a
+        // animação a partir do número que está na tela.
+        if (dinheiro != alvoAnimacao)
         {
-            float velocidade = Mathf.Abs(dinheiro - dinheiroExibido) / 0.8f; // completa em 0.8 segundos
-            velocidade = Mathf.Max(velocidade, 10f); // velocidade mínima de 1 por segundo
-            dinheiroExibido = Mathf.MoveTowards(dinheiroExibido, dinheiro, velocidade * Time.deltaTime);
-            textoDinheiro.text = "R$ " + dinheiroExibido.ToString("F2");
+            alvoAnimacao = dinheiro;
+            inicioAnimacao = dinheiroExibido;
+            tempoAnimacao = 0f;
+
+            float distancia = Mathf.Abs(alvoAnimacao - inicioAnimacao);
+
+            // Sem distância não há o que animar.
+            if (distancia <= 0.001f)
+            {
+                dinheiroExibido = alvoAnimacao;
+                AtualizarHUD();
+            }
+            else
+            {
+                duracaoAnimacao = CalcularDuracao(distancia);
+            }
         }
-        else
-        {
-            dinheiroExibido = dinheiro;
-            textoDinheiro.text = "R$ " + dinheiro.ToString("F2");
-        }
+
+        if (dinheiroExibido == alvoAnimacao)
+            return;
+
+        tempoAnimacao += Time.deltaTime;
+
+        float t = duracaoAnimacao > 0f
+            ? Mathf.Clamp01(tempoAnimacao / duracaoAnimacao)
+            : 1f;
+
+        // Desacelera perto do final, mas termina exatamente no alvo.
+        float suave = 1f - Mathf.Pow(1f - t, 3f);
+        dinheiroExibido = Mathf.Lerp(inicioAnimacao, alvoAnimacao, suave);
+
+        if (t >= 1f)
+            dinheiroExibido = alvoAnimacao;
+
+        AtualizarHUD();
+    }
+
+    /// <summary>
+    /// Valores pequenos terminam rápido e valores altos levam um pouco mais,
+    /// mas sempre têm um fim (nada de aproximação infinita).
+    /// </summary>
+    float CalcularDuracao(float distancia)
+    {
+        float duracao = 0.25f + 0.35f * Mathf.Log10(1f + distancia);
+
+        // Garante limites válidos mesmo se os campos do Inspector forem
+        // configurados ao contrário.
+        float minimo = Mathf.Max(0.01f, Mathf.Min(duracaoMinima, duracaoMaxima));
+        float maximo = Mathf.Max(minimo, duracaoMaxima);
+
+        return Mathf.Clamp(duracao, minimo, maximo);
     }
 
     public void AdicionarDinheiro(float valor)
@@ -57,13 +114,15 @@ public class GameManager : MonoBehaviour
     {
         dinheiro = valor;
         dinheiroExibido = valor;
+        alvoAnimacao = valor;
+        tempoAnimacao = 0f;
         AtualizarHUD();
     }
 
     void AtualizarHUD()
     {
         if (textoDinheiro != null)
-            textoDinheiro.text = "R$ " + dinheiro.ToString("F2");
+            textoDinheiro.text = "R$ " + dinheiroExibido.ToString("F2");
     }
 
     void MostrarDiferenca(float valor)
