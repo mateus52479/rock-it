@@ -185,7 +185,7 @@ MonoBehaviour:
   prefabTextoFlutuante: {fileID: 8747597412778403502, guid: badca0608911e7d468dc0424cae49b0d, type: 3}
   escalaAumentada: 2.5
   duracaoTremor: 0.3
-  intensidadeTremor: 0.1
+  intensidadeTremor: 0.06
   tempoParaArrastar: 0.2
 --- !u!1 &5091038044948531391
 GameObject:

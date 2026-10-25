@@ -16,7 +16,10 @@ public class PedraManager : MonoBehaviour
     [Header("Configurações")]
     public float escalaAumentada = 2.5f;
     public float duracaoTremor = 0.3f;
-    public float intensidadeTremor = 0.1f;
+
+    [Tooltip("Força do tremor ao acertar a pedra (em unidades de mundo).")]
+    public float intensidadeTremor = 0.06f;
+
     public float tempoParaArrastar = 0.2f;
 
     [Header("Escala")]
@@ -528,19 +531,29 @@ public class PedraManager : MonoBehaviour
         AtualizarTextoVida();
         SpawnarTextoDano(danoFinal, critico, posicaoUltimoClique + Vector3.up * 0.3f);
 
-        float intensidade = critico ? intensidadeTremor * 3f : intensidadeTremor;
+        float intensidade = critico ? intensidadeTremor * 2f : intensidadeTremor;
         float duracao = critico ? duracaoTremor * 1.5f : duracaoTremor;
 
         StartCoroutine(PulsarImpacto(critico));
 
         Vector3 pos = transform.position;
         float tempo = 0f;
+        float fase = Random.Range(0f, Mathf.PI * 2f);
 
         while (tempo < duracao)
         {
-            float ox = Random.Range(-intensidade, intensidade);
-            float oy = Random.Range(-intensidade, intensidade);
-            transform.position = pos + new Vector3(ox, oy, 0);
+            // Oscilação suave que perde força: o sorteio de posição quadro a
+            // quadro vibrava demais na pedra ampliada e parecia um terremoto.
+            float progresso = Mathf.Clamp01(tempo / duracao);
+            float forca = intensidade * (1f - progresso);
+            float onda = tempo * 42f + fase;
+
+            transform.position = pos + new Vector3(
+                Mathf.Sin(onda) * forca,
+                Mathf.Cos(onda * 1.3f) * forca * 0.6f,
+                0f
+            );
+
             tempo += Time.deltaTime;
             yield return null;
         }
