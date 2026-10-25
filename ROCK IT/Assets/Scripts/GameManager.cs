@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
@@ -17,12 +18,29 @@ public class GameManager : MonoBehaviour
     [Tooltip("Duração máxima da animação, mesmo para valores muito altos (em segundos).")]
     public float duracaoMaxima = 1.2f;
 
+    [Header("HUD do dinheiro")]
+    [Tooltip("Tamanho da fonte do valor. Se o número for muito comprido, ele diminui sozinho.")]
+    public float tamanhoFonteDinheiro = 42f;
+
+    [Tooltip("Tamanho da fonte do +X/-X que aparece ao ganhar ou gastar.")]
+    public float tamanhoFonteDiferenca = 26f;
+
+    [Tooltip("Cor do \"R$\".")]
+    public Color corMoeda = new Color(1f, 0.79f, 0.29f);
+
+    [Tooltip("Quanto o valor cresce no pulinho ao ganhar ou gastar (0 desliga o pulo).")]
+    [Range(0f, 0.4f)]
+    public float escalaDoPulso = 0.12f;
+
     private float dinheiroExibido = 0f;
     private float alvoAnimacao = 0f;
     private float inicioAnimacao = 0f;
     private float tempoAnimacao = 0f;
     private float duracaoAnimacao = 0f;
     private Coroutine corotinaDiferenca;
+    private Coroutine corotinaPulso;
+    private string corMoedaHtml = "#FFC94A";
+    private Vector2 posicaoBaseDiferenca = new Vector2(0f, 46f);
 
     /// <summary>Teto do dinheiro. Evita que o saldo vire infinito.</summary>
     public const float DinheiroMaximo = 1e30f;
@@ -31,11 +49,104 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         TutorialBootstrap.Instalar();
+        ConfigurarHUD();
     }
 
     void Start()
     {
         AtualizarHUD();
+    }
+
+    /// <summary>
+    /// Deixa o dinheiro legível: o texto original tinha só 140 px de largura e
+    /// quebrava a linha em qualquer valor maior que "R$ 999,99". Aqui o layout
+    /// é refeito em runtime, sem mexer na cena: sem quebra de linha, fonte que
+    /// se adapta, separador de milhar, "R$" dourado e um pulinho ao ganhar.
+    /// </summary>
+    void ConfigurarHUD()
+    {
+        if (textoDinheiro == null) return;
+
+        Transform container = textoDinheiro.transform.parent;
+
+        if (container != null)
+        {
+            // O HorizontalLayoutGroup espremia o texto em 140 px e brigava
+            // com o posicionamento manual que fazemos abaixo.
+            HorizontalLayoutGroup layout = container.GetComponent<HorizontalLayoutGroup>();
+            if (layout != null)
+            {
+                layout.enabled = false;
+                Destroy(layout);
+            }
+
+            ContentSizeFitter fitter = container.GetComponent<ContentSizeFitter>();
+            if (fitter != null)
+            {
+                fitter.enabled = false;
+                Destroy(fitter);
+            }
+
+            RectTransform rtContainer = container as RectTransform;
+            if (rtContainer != null)
+            {
+                rtContainer.anchoredPosition = new Vector2(0f, rtContainer.anchoredPosition.y);
+                rtContainer.sizeDelta = new Vector2(640f, 96f);
+            }
+        }
+
+        corMoedaHtml = "#" + ColorUtility.ToHtmlStringRGB(corMoeda);
+
+        PrepararTextoDinheiro();
+        PrepararTextoDiferenca();
+    }
+
+    void PrepararTextoDinheiro()
+    {
+        RectTransform rt = textoDinheiro.rectTransform;
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = new Vector2(0f, 0f);
+        rt.sizeDelta = new Vector2(620f, 64f);
+
+        textoDinheiro.textWrappingMode = TextWrappingModes.NoWrap;
+        textoDinheiro.overflowMode = TextOverflowModes.Overflow;
+        textoDinheiro.enableAutoSizing = true;
+        textoDinheiro.fontSizeMin = 20f;
+        textoDinheiro.fontSizeMax = tamanhoFonteDinheiro;
+        textoDinheiro.fontSize = tamanhoFonteDinheiro;
+        textoDinheiro.alignment = TextAlignmentOptions.Center;
+        textoDinheiro.fontStyle = FontStyles.Bold;
+        textoDinheiro.color = Color.white;
+        textoDinheiro.raycastTarget = false;
+
+        if (textoDinheiro.GetComponent<Shadow>() == null)
+        {
+            Shadow sombra = textoDinheiro.gameObject.AddComponent<Shadow>();
+            sombra.effectColor = new Color(0f, 0f, 0f, 0.7f);
+            sombra.effectDistance = new Vector2(0f, -3f);
+        }
+    }
+
+    void PrepararTextoDiferenca()
+    {
+        if (textoDiferenca == null) return;
+
+        RectTransform rt = textoDiferenca.rectTransform;
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = posicaoBaseDiferenca;
+        rt.sizeDelta = new Vector2(620f, 32f);
+
+        textoDiferenca.textWrappingMode = TextWrappingModes.NoWrap;
+        textoDiferenca.overflowMode = TextOverflowModes.Overflow;
+        textoDiferenca.enableAutoSizing = false;
+        textoDiferenca.fontSize = tamanhoFonteDiferenca;
+        textoDiferenca.alignment = TextAlignmentOptions.Center;
+        textoDiferenca.fontStyle = FontStyles.Bold;
+        textoDiferenca.raycastTarget = false;
     }
 
     void Update()
@@ -99,11 +210,13 @@ public class GameManager : MonoBehaviour
 
     public void AdicionarDinheiro(float valor)
     {
+        valor = SanearValor(valor);
+
         // Recompensa negativa não pode deixar o saldo negativo: se isso
         // acontecesse o jogador não conseguiria comprar nem a Pedra Comum.
         // O teto evita que uma recompensa gigante vire infinito.
         dinheiro = Mathf.Clamp(
-            dinheiro + SanearValor(valor),
+            dinheiro + valor,
             0f,
             DinheiroMaximo
         );
@@ -152,12 +265,52 @@ public class GameManager : MonoBehaviour
 
     void AtualizarHUD()
     {
-        if (textoDinheiro != null)
-            textoDinheiro.text = NumeroUtil.FormatarDinheiro(dinheiroExibido);
+        if (textoDinheiro == null) return;
+
+        textoDinheiro.text =
+            "<color=" + corMoedaHtml + ">R$</color> " + FormatarValor(dinheiroExibido);
+    }
+
+    /// <summary>
+    /// Abaixo de um milhão usa separador de milhar (1.234,56); acima disso,
+    /// o sufixo curto (1,2 mi) para não estourar a tela.
+    /// </summary>
+    static string FormatarValor(float valor)
+    {
+        float absoluto = Mathf.Abs(valor);
+
+        return absoluto < 1e6f
+            ? ComSeparadorDeMilhar(absoluto)
+            : NumeroUtil.Formatar(absoluto);
+    }
+
+    /// <summary>1234.56 -> 1.234,56 (sem depender da cultura do sistema).</summary>
+    static string ComSeparadorDeMilhar(float valor)
+    {
+        string texto = Mathf.Abs(valor).ToString(
+            "F2",
+            System.Globalization.CultureInfo.InvariantCulture
+        );
+
+        string[] partes = texto.Split('.');
+        string inteiro = partes[0];
+        string saida = "";
+
+        for (int i = 0; i < inteiro.Length; i++)
+        {
+            if (i > 0 && (inteiro.Length - i) % 3 == 0)
+                saida += ".";
+
+            saida += inteiro[i];
+        }
+
+        return partes.Length > 1 ? saida + "," + partes[1] : saida;
     }
 
     void MostrarDiferenca(float valor)
     {
+        PulsarValor();
+
         if (textoDiferenca == null) return;
 
         if (corotinaDiferenca != null)
@@ -166,9 +319,45 @@ public class GameManager : MonoBehaviour
         corotinaDiferenca = StartCoroutine(AnimarDiferenca(valor));
     }
 
+    /// <summary>Pulinho rápido no valor quando ele muda.</summary>
+    void PulsarValor()
+    {
+        if (textoDinheiro == null || escalaDoPulso <= 0f) return;
+
+        if (corotinaPulso != null)
+            StopCoroutine(corotinaPulso);
+
+        textoDinheiro.transform.localScale = Vector3.one;
+        corotinaPulso = StartCoroutine(AnimarPulso());
+    }
+
+    IEnumerator AnimarPulso()
+    {
+        Transform alvo = textoDinheiro.transform;
+        float duracao = 0.22f;
+        float tempo = 0f;
+
+        while (tempo < duracao && alvo != null)
+        {
+            tempo += Time.deltaTime;
+            float t = Mathf.Clamp01(tempo / duracao);
+
+            alvo.localScale = Vector3.one * (1f + escalaDoPulso * Mathf.Sin(t * Mathf.PI));
+            yield return null;
+        }
+
+        if (alvo != null)
+            alvo.localScale = Vector3.one;
+
+        corotinaPulso = null;
+    }
+
     IEnumerator AnimarDiferenca(float valor)
     {
         textoDiferenca.gameObject.SetActive(true);
+
+        RectTransform rt = textoDiferenca.rectTransform;
+        rt.anchoredPosition = posicaoBaseDiferenca;
 
         if (valor >= 0)
         {
@@ -181,11 +370,23 @@ public class GameManager : MonoBehaviour
             textoDiferenca.color = new Color(0.9f, 0.2f, 0.2f, 1f);
         }
 
-        // Aparece por 1.5 segundos depois some gradualmente
-        yield return new WaitForSeconds(1.5f);
-
+        // Começa embaixo do valor e sobe devagar enquanto fica visível.
         float tempo = 0f;
-        float duracao = 0.5f;
+        float duracao = 1.5f;
+        float subida = 18f;
+
+        while (tempo < duracao)
+        {
+            tempo += Time.deltaTime;
+            float t = Mathf.Clamp01(tempo / duracao);
+
+            rt.anchoredPosition = posicaoBaseDiferenca + new Vector2(0f, subida * t);
+            yield return null;
+        }
+
+        // Some gradualmente
+        tempo = 0f;
+        duracao = 0.5f;
         Color corInicial = textoDiferenca.color;
 
         while (tempo < duracao)
@@ -197,6 +398,7 @@ public class GameManager : MonoBehaviour
         }
 
         textoDiferenca.gameObject.SetActive(false);
+        rt.anchoredPosition = posicaoBaseDiferenca;
     }
 
     /// <summary>Valores altos usam sufixo para o texto não estourar a tela.</summary>
@@ -205,7 +407,7 @@ public class GameManager : MonoBehaviour
         float absoluto = Mathf.Abs(valor);
 
         return absoluto < 1e6f
-            ? absoluto.ToString("F2")
+            ? ComSeparadorDeMilhar(absoluto)
             : NumeroUtil.Formatar(absoluto);
     }
 }
