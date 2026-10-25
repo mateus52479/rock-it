@@ -27,6 +27,23 @@ public class PedraManager : MonoBehaviour
     [Tooltip("Quadros por segundo das pedras com segundo sprite. 0 desativa a animação.")]
     public float framesPorSegundo = 2f;
 
+    [Header("Queda ao comprar")]
+    [Tooltip("Altura de onde a pedra cai ao ser comprada (em unidades de mundo).")]
+    public float alturaQueda = 3.2f;
+
+    [Tooltip("Duração da queda (em segundos).")]
+    public float duracaoQueda = 0.55f;
+
+    [Tooltip("Inclinação inicial da pedra na queda (em graus, para cada lado).")]
+    public float inclinacaoQueda = 25f;
+
+    [Tooltip("Quanto a pedra achata ao bater na mesa (0 desliga o efeito).")]
+    [Range(0f, 0.6f)]
+    public float esmagamentoImpacto = 0.2f;
+
+    [Tooltip("Empurrãozinho aleatório depois que a pedra pousa.")]
+    public float impulsoAoPousar = 1.5f;
+
     private PedraDados dados;
     private int vidaAtual;
     private bool estaAtiva = false;
@@ -99,13 +116,111 @@ public class PedraManager : MonoBehaviour
         AtualizarSpritePorVida();
         AtualizarTextoVida();
 
+        MaquinaScanner.NotificarNovaPedra(this);
+
+        // Só a compra tem animação de queda: pedras carregadas do save
+        // (InicializarComVida) já aparecem paradas na mesa.
+        StartCoroutine(CairNaMesa());
+    }
+
+    /// <summary>
+    /// Animação de spawn da pedra comprada: ela cai de cima da mesa, achata no
+    /// impacto e só depois volta a aceitar clique e arrasto. A queda é feita na
+    /// mão porque o Rigidbody2D do prefab tem gravidade 0.
+    /// </summary>
+    IEnumerator CairNaMesa()
+    {
+        Vector3 destino = transform.position;
+        Vector3 posicaoInicial = destino + Vector3.up * Mathf.Max(0f, alturaQueda);
+        Vector3 escalaAlvo = escalaBase;
+        float rotacaoInicial = Random.Range(-inclinacaoQueda, inclinacaoQueda);
+
+        transform.position = posicaoInicial;
+        transform.rotation = Quaternion.Euler(0f, 0f, rotacaoInicial);
+        transform.localScale = escalaAlvo;
+
+        interacaoBloqueada = true;
+        estaAtiva = false;
+
         if (rb != null)
         {
-            Vector2 direcao = Random.insideUnitCircle.normalized;
-            rb.AddForce(direcao * 2f, ForceMode2D.Impulse);
+            // A física fica desligada durante a animação para o Rigidbody2D
+            // não brigar com a posição que estamos definindo.
+            rb.simulated = false;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
         }
 
-        MaquinaScanner.NotificarNovaPedra(this);
+        float duracao = Mathf.Max(0.05f, duracaoQueda);
+        float tempo = 0f;
+
+        while (tempo < duracao)
+        {
+            tempo += Time.deltaTime;
+            float t = Mathf.Clamp01(tempo / duracao);
+
+            // t² dá a sensação de gravidade: começa devagar e acelera.
+            float queda = t * t;
+
+            transform.position = Vector3.Lerp(posicaoInicial, destino, queda);
+            transform.rotation = Quaternion.Euler(
+                0f,
+                0f,
+                Mathf.Lerp(rotacaoInicial, 0f, queda)
+            );
+            yield return null;
+        }
+
+        transform.position = destino;
+        transform.rotation = Quaternion.identity;
+
+        yield return StartCoroutine(AchatarNoImpacto(escalaAlvo));
+
+        if (rb != null)
+        {
+            rb.simulated = true;
+
+            if (impulsoAoPousar > 0f)
+            {
+                Vector2 direcao = Random.insideUnitCircle.normalized;
+                rb.AddForce(direcao * impulsoAoPousar, ForceMode2D.Impulse);
+            }
+        }
+
+        interacaoBloqueada = false;
+    }
+
+    /// <summary>
+    /// Squash do impacto: começa achatada e volta ao normal com um leve
+    /// overshoot, como se a pedra tivesse batido na mesa.
+    /// </summary>
+    IEnumerator AchatarNoImpacto(Vector3 escalaAlvo)
+    {
+        if (esmagamentoImpacto <= 0f)
+            yield break;
+
+        float duracao = 0.22f;
+        float tempo = 0f;
+
+        while (tempo < duracao)
+        {
+            tempo += Time.deltaTime;
+            float t = Mathf.Clamp01(tempo / duracao);
+
+            // Cosseno decaindo: achatado no quadro do impacto, esticado de
+            // leve na volta e zerado no fim.
+            float achatamento =
+                esmagamentoImpacto * Mathf.Cos(t * Mathf.PI * 2f) * (1f - t);
+
+            transform.localScale = new Vector3(
+                escalaAlvo.x * (1f + achatamento),
+                escalaAlvo.y * (1f - achatamento),
+                escalaAlvo.z
+            );
+            yield return null;
+        }
+
+        transform.localScale = escalaAlvo;
     }
 
     public void InicializarComVida(PedraDados d, int vida)
