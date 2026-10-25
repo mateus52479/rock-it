@@ -55,6 +55,10 @@ public class MaquinaInversor : MonoBehaviour, IMaquinaRecebedora
 
         pedra.transform.position = pos;
         pedra.InverterValores();
+
+        // A máquina fica na beirada da mesa; traz a pedra de volta para dentro
+        // do limite antes de religar a física.
+        pedra.ManterNaMesa();
         pedra.BloquearInteracao(false);
 
         // Solta por perto

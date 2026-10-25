@@ -121,6 +121,9 @@ public class PedraManager : MonoBehaviour
 
         MaquinaScanner.NotificarNovaPedra(this);
 
+        // Se o ponto de spawn cair fora da mesa, a pedra cai na beirada.
+        transform.position = LimiteMesa.Limitar(transform.position, MetadeDoColisor());
+
         // Só a compra tem animação de queda: pedras carregadas do save
         // (InicializarComVida) já aparecem paradas na mesa.
         StartCoroutine(CairNaMesa());
@@ -242,6 +245,9 @@ public class PedraManager : MonoBehaviour
 
         AtualizarSpritePorVida();
         AtualizarTextoVida();
+
+        // Save antigo podia ter guardado uma pedra fora da mesa: traz de volta.
+        transform.position = LimiteMesa.Limitar(transform.position, MetadeDoColisor());
     }
 
     void AtualizarSpritePorVida()
@@ -362,6 +368,16 @@ public class PedraManager : MonoBehaviour
 
     void OnMouseUp()
     {
+        SoltarPedra();
+    }
+
+    /// <summary>
+    /// Termina o clique/arrasto. Também é chamado pelo Update quando o botão é
+    /// solto fora do colisor: com a pedra presa na borda da mesa, o OnMouseUp
+    /// pode não chegar e ela ficaria seguindo o mouse para sempre.
+    /// </summary>
+    void SoltarPedra()
+    {
         if (arrastando)
         {
             if (rb != null)
@@ -403,7 +419,7 @@ public class PedraManager : MonoBehaviour
             return;
         }
 
-        if (segurando && !arrastando)
+        if (segurando)
         {
             segurando = false;
             if (!estaAtiva)
@@ -416,6 +432,9 @@ public class PedraManager : MonoBehaviour
     void Update()
     {
         AtualizarAnimacao();
+
+        if ((segurando || arrastando) && Input.GetMouseButtonUp(0))
+            SoltarPedra();
 
         if (!segurando) return;
 
@@ -443,8 +462,34 @@ public class PedraManager : MonoBehaviour
         {
             Vector3 posicaoMouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             posicaoMouse.z = 0f;
-            transform.position = posicaoMouse + offset;
+
+            // Mover o transform na mão ignora as paredes, então o arrasto é
+            // limitado à mesa: a pedra para na borda em vez de escapar.
+            transform.position = LimiteMesa.Limitar(
+                posicaoMouse + offset,
+                MetadeDoColisor()
+            );
         }
+    }
+
+    /// <summary>Metade do tamanho do collider em unidades de mundo.</summary>
+    Vector2 MetadeDoColisor()
+    {
+        if (colisor == null)
+            PrepararColisor();
+
+        return colisor != null
+            ? (Vector2)colisor.bounds.extents
+            : new Vector2(0.5f, 0.5f);
+    }
+
+    /// <summary>
+    /// Prende a pedra dentro da mesa. As máquinas movem a pedra para a própria
+    /// posição, que fica na beirada, então elas chamam isso ao devolver a pedra.
+    /// </summary>
+    public void ManterNaMesa()
+    {
+        transform.position = LimiteMesa.Limitar(transform.position, MetadeDoColisor());
     }
 
     void CentralizarEAumentar()

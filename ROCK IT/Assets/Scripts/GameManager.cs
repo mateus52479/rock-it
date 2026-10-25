@@ -49,6 +49,7 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         TutorialBootstrap.Instalar();
+        LimiteMesa.Instalar();
         ConfigurarHUD();
     }
 
