@@ -10,14 +10,28 @@ public class MaquinaScanner : MonoBehaviour
     {
         ativo = true;
         gameObject.SetActive(true);
-        AtualizarTodasPedras();
+        AtualizarTodosContornos();
     }
 
-    void AtualizarTodasPedras()
+    /// <summary>
+    /// Recalcula a cor do contorno de todas as pedras na mesa.
+    /// Chamado ao comprar o Scanner e quando Sorte/Fortuna mudam (as duas
+    /// mudam o valor médio da pedra, então a cor antiga ficava desatualizada).
+    /// </summary>
+    public static void AtualizarTodosContornos()
     {
+        MaquinaManager manager = MaquinaManager.Instance;
+
+        if (manager == null || !manager.TemMaquina("scanner"))
+            return;
+
         PedraManager[] pedras = FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
+
         foreach (PedraManager p in pedras)
-            p.AtualizarContornoScanner(ativo);
+        {
+            if (p != null)
+                p.AtualizarContornoScanner(true);
+        }
     }
 
     // Chama isso quando uma nova pedra spawna.

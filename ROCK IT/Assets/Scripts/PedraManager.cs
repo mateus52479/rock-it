@@ -574,6 +574,14 @@ public class PedraManager : MonoBehaviour
         if (corpo != null) corpo.isKinematic = bloquear;
     }
 
+    [Header("Scanner (cor do contorno)")]
+    [Tooltip("Margem de empate: dentro de ±2% do preço a pedra é considerada 'empate' (amarelo).")]
+    public float margemScanner = 0.02f;
+
+    public Color corScannerLucro = new Color(0.2f, 0.9f, 0.2f, 0.55f);
+    public Color corScannerEmpate = new Color(1f, 0.85f, 0.2f, 0.55f);
+    public Color corScannerPrejuizo = new Color(0.9f, 0.2f, 0.2f, 0.55f);
+
     public void AtualizarContornoScanner(bool ativo)
     {
         if (!ativo)
@@ -596,15 +604,25 @@ public class PedraManager : MonoBehaviour
 
         contornoScanner.enabled = true;
 
-        // Verde quando a recompensa média (com a Sorte e a Fortuna atuais)
-        // paga o preço da pedra; vermelho quando comprar dá prejuízo.
+        if (dados == null || dados.tabelaValores == null)
+            return;
+
+        // A cor compara a recompensa média (com Sorte e Fortuna atuais) com o
+        // preço. A margem existe porque as tabelas são arredondadas: sem ela,
+        // uma diferença de 0,1 (0,4%) já pintava a pedra de verde ou vermelho.
         float valorEsperado = dados.ValorEsperado(
             StatusManager.Instance.nivelSorte,
             StatusManager.Instance.GetMultiplicadorFortuna());
 
-        contornoScanner.color = valorEsperado >= dados.precoCompra
-            ? new Color(0.2f, 0.9f, 0.2f, 0.5f)
-            : new Color(0.9f, 0.2f, 0.2f, 0.5f);
+        float preco = dados.precoCompra;
+        float margem = Mathf.Abs(preco) * Mathf.Max(0f, margemScanner);
+
+        if (valorEsperado > preco + margem)
+            contornoScanner.color = corScannerLucro;      // lucro médio
+        else if (valorEsperado < preco - margem)
+            contornoScanner.color = corScannerPrejuizo;   // prejuízo médio
+        else
+            contornoScanner.color = corScannerEmpate;     // empata no longo prazo
     }
 
     public void InverterValores()
