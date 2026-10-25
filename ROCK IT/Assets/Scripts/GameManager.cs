@@ -24,6 +24,9 @@ public class GameManager : MonoBehaviour
     private float duracaoAnimacao = 0f;
     private Coroutine corotinaDiferenca;
 
+    /// <summary>Teto do dinheiro. Evita que o saldo vire infinito.</summary>
+    public const float DinheiroMaximo = 1e30f;
+
     void Awake()
     {
         Instance = this;
@@ -98,13 +101,26 @@ public class GameManager : MonoBehaviour
     {
         // Recompensa negativa não pode deixar o saldo negativo: se isso
         // acontecesse o jogador não conseguiria comprar nem a Pedra Comum.
-        dinheiro = Mathf.Max(0f, dinheiro + valor);
+        // O teto evita que uma recompensa gigante vire infinito.
+        dinheiro = Mathf.Clamp(
+            dinheiro + SanearValor(valor),
+            0f,
+            DinheiroMaximo
+        );
+
         MostrarDiferenca(valor);
     }
 
     public bool GastarDinheiro(float valor)
     {
+        valor = SanearValor(valor);
+
+        // Custo negativo nunca deve pagar o jogador (era o que acontecia
+        // quando o preço de um upgrade estourava em níveis altos).
+        if (valor < 0f) return false;
+
         if (dinheiro < valor) return false;
+
         dinheiro -= valor;
         MostrarDiferenca(-valor);
         return true;
@@ -112,17 +128,32 @@ public class GameManager : MonoBehaviour
 
     public void CarregarDinheiro(float valor)
     {
-        dinheiro = valor;
-        dinheiroExibido = valor;
-        alvoAnimacao = valor;
+        dinheiro = Mathf.Clamp(SanearValor(valor), 0f, DinheiroMaximo);
+        dinheiroExibido = dinheiro;
+        alvoAnimacao = dinheiro;
         tempoAnimacao = 0f;
         AtualizarHUD();
+    }
+
+    /// <summary>
+    /// Deixa o valor dentro de limites seguros: nada de NaN nem infinito
+    /// chegando no HUD ou no save.
+    /// </summary>
+    static float SanearValor(float valor)
+    {
+        if (float.IsNaN(valor))
+            return 0f;
+
+        if (float.IsInfinity(valor))
+            return valor > 0f ? DinheiroMaximo : -DinheiroMaximo;
+
+        return Mathf.Clamp(valor, -DinheiroMaximo, DinheiroMaximo);
     }
 
     void AtualizarHUD()
     {
         if (textoDinheiro != null)
-            textoDinheiro.text = "R$ " + dinheiroExibido.ToString("F2");
+            textoDinheiro.text = NumeroUtil.FormatarDinheiro(dinheiroExibido);
     }
 
     void MostrarDiferenca(float valor)
@@ -141,12 +172,12 @@ public class GameManager : MonoBehaviour
 
         if (valor >= 0)
         {
-            textoDiferenca.text = "+" + valor.ToString("F2");
+            textoDiferenca.text = "+" + FormatarDiferenca(valor);
             textoDiferenca.color = new Color(0.2f, 0.9f, 0.2f, 1f);
         }
         else
         {
-            textoDiferenca.text = valor.ToString("F2");
+            textoDiferenca.text = "-" + FormatarDiferenca(valor);
             textoDiferenca.color = new Color(0.9f, 0.2f, 0.2f, 1f);
         }
 
@@ -166,5 +197,15 @@ public class GameManager : MonoBehaviour
         }
 
         textoDiferenca.gameObject.SetActive(false);
+    }
+
+    /// <summary>Valores altos usam sufixo para o texto não estourar a tela.</summary>
+    static string FormatarDiferenca(float valor)
+    {
+        float absoluto = Mathf.Abs(valor);
+
+        return absoluto < 1e6f
+            ? absoluto.ToString("F2")
+            : NumeroUtil.Formatar(absoluto);
     }
 }

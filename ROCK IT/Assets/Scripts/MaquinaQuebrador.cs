@@ -66,10 +66,10 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
 
             if (pedraAtual == null) break;
 
-            int dano = Mathf.Max(
-                1,
-                Mathf.RoundToInt(StatusManager.Instance.GetDanoForca() * percentualDoDanoDoJogador)
-            );
+            float danoFlutuante = StatusManager.Instance.GetDanoForca()
+                * Mathf.Max(0f, percentualDoDanoDoJogador);
+
+            int dano = Mathf.Max(1, (int)Mathf.Min(danoFlutuante, 2000000000f));
 
             bool destruida = pedraAtual.ReceberDanoExterno(dano);
             if (destruida)

@@ -43,7 +43,7 @@ public class ItemStatusUI : MonoBehaviour
         }
     }
 
-    void AtualizarCorCusto(int custo)
+    void AtualizarCorCusto(float custo)
     {
         textoCusto.text = NumeroUtil.FormatarDinheiro(custo);
         textoCusto.color = GameManager.Instance.dinheiro >= custo

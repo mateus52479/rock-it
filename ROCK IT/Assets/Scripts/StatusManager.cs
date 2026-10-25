@@ -23,6 +23,10 @@ public class StatusManager : MonoBehaviour
              "1.6 acompanha o ganho de dinheiro das pedras; 2.5 tornava o nível 20 inalcançável.")]
     public float multiplicadorCusto = 1.6f;
 
+    [Tooltip("Teto do custo de um nível. Sem isso o valor estourava o limite de " +
+             "número inteiro por volta do nível 39 e ficava negativo (upgrade de graça).")]
+    public float custoMaximo = 1e30f;
+
     void Awake()
     {
         Instance = this;
@@ -37,19 +41,42 @@ public class StatusManager : MonoBehaviour
              "(o dano cresce no mesmo ritmo em que as pedras ficam mais duras).")]
     public float fatorDanoPorNivel = 1.75f;
 
+    [Tooltip("Teto do dano. A vida das pedras fica na casa dos milhares, então esse " +
+             "limite não muda a jogabilidade — só impede o número de estourar em níveis absurdos.")]
+    public float danoMaximo = 1e9f;
+
     public float GetDanoForca()
     {
-        return danoBase * Mathf.Pow(fatorDanoPorNivel, Mathf.Max(0, nivelForca - 1));
+        return CalcularPotencia(danoBase, fatorDanoPorNivel, nivelForca, danoMaximo);
     }
 
-    public int GetCustoProximoNivelForca()
+    /// <summary>
+    /// Calcula base * fator^(nivel-1) usando double e limita o resultado.
+    /// Antes o valor era convertido com Mathf.RoundToInt: acima de ~2,1 bilhões
+    /// a conversão estourava e virava int.MinValue. Era por isso que, em níveis
+    /// altos, o dano caía para 1 (a "forma básica") e o custo ficava negativo.
+    /// </summary>
+    static float CalcularPotencia(float baseValor, float fator, int nivel, float teto)
     {
-        return Mathf.RoundToInt(custoBaseForca * Mathf.Pow(multiplicadorCusto, nivelForca - 1));
+        double valor = baseValor * System.Math.Pow(
+            Mathf.Max(0.001f, fator),
+            Mathf.Max(0, nivel - 1));
+
+        if (double.IsNaN(valor) || valor <= 0.0)
+            return 0f;
+
+        return (float)System.Math.Min(valor, System.Math.Max(0.0, teto));
+    }
+
+    public float GetCustoProximoNivelForca()
+    {
+        return Mathf.Max(1f,
+            CalcularPotencia(custoBaseForca, multiplicadorCusto, nivelForca, custoMaximo));
     }
 
     public bool UpgradeForca()
     {
-        int custo = GetCustoProximoNivelForca();
+        float custo = GetCustoProximoNivelForca();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelForca++;
         return true;
@@ -62,17 +89,20 @@ public class StatusManager : MonoBehaviour
     /// </summary>
     public float GetDeslocamentoSorte()
     {
-        return Mathf.Max(0, nivelSorte - 1);
+        // O deslocamento nunca passa de 100 pontos: acima disso a chance já
+        // teria migrado toda a perda para o prêmio máximo.
+        return Mathf.Clamp(nivelSorte - 1, 0, 100);
     }
 
-    public int GetCustoProximoNivelSorte()
+    public float GetCustoProximoNivelSorte()
     {
-        return Mathf.RoundToInt(custoBaseSorte * Mathf.Pow(multiplicadorCusto, nivelSorte - 1));
+        return Mathf.Max(1f,
+            CalcularPotencia(custoBaseSorte, multiplicadorCusto, nivelSorte, custoMaximo));
     }
 
     public bool UpgradeSorte()
     {
-        int custo = GetCustoProximoNivelSorte();
+        float custo = GetCustoProximoNivelSorte();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelSorte++;
         return true;
@@ -82,19 +112,27 @@ public class StatusManager : MonoBehaviour
     [Tooltip("Multiplicador de Fortuna por nível. Fortuna multiplica apenas recompensas positivas.")]
     public float fatorFortunaPorNivel = 1.25f;
 
+    [Tooltip("Teto do multiplicador de Fortuna. A partir daqui o valor fica fixo, " +
+             "em vez de virar infinito (o que zerava a recompensa na prática).")]
+    public float multiplicadorFortunaMaximo = 1e15f;
+
     public float GetMultiplicadorFortuna()
     {
-        return Mathf.Pow(fatorFortunaPorNivel, Mathf.Max(0, nivelFortuna - 1));
+        float multiplicador = CalcularPotencia(
+            1f, fatorFortunaPorNivel, nivelFortuna, multiplicadorFortunaMaximo);
+
+        return Mathf.Max(1f, multiplicador);
     }
 
-    public int GetCustoProximoNivelFortuna()
+    public float GetCustoProximoNivelFortuna()
     {
-        return Mathf.RoundToInt(custoBaseFortuna * Mathf.Pow(multiplicadorCusto, nivelFortuna - 1));
+        return Mathf.Max(1f,
+            CalcularPotencia(custoBaseFortuna, multiplicadorCusto, nivelFortuna, custoMaximo));
     }
 
     public bool UpgradeFortuna()
     {
-        int custo = GetCustoProximoNivelFortuna();
+        float custo = GetCustoProximoNivelFortuna();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelFortuna++;
         return true;
@@ -148,10 +186,15 @@ public class StatusManager : MonoBehaviour
 
     public void CarregarStatus(StatusJogador dados)
     {
-        nivelForca = dados.nivelForca;
-        nivelSorte = dados.nivelSorte;
-        nivelFortuna = dados.nivelFortuna;
-        habilidadesDesbloqueadas = new List<string>(dados.habilidadesDesbloqueadas);
+        // Um save antigo com valor estourado podia trazer nível negativo e,
+        // com isso, o status "voltava" para um valor sem sentido.
+        nivelForca = Mathf.Max(1, dados.nivelForca);
+        nivelSorte = Mathf.Max(1, dados.nivelSorte);
+        nivelFortuna = Mathf.Max(1, dados.nivelFortuna);
+
+        habilidadesDesbloqueadas = dados.habilidadesDesbloqueadas != null
+            ? new List<string>(dados.habilidadesDesbloqueadas)
+            : new List<string>();
     }
 }
 
@@ -160,24 +203,49 @@ public class StatusManager : MonoBehaviour
 /// </summary>
 public static class NumeroUtil
 {
-    private static readonly string[] sufixos = { "", " mil", " mi", " bi", " tri", " qua" };
+    private static readonly string[] sufixos =
+    {
+        "", " mil", " mi", " bi", " tri", " qua",
+        " qui", " sex", " sep", " oct", " non", " dec"
+    };
 
     public static string Formatar(float valor, int casasDecimais = 1)
     {
+        if (float.IsNaN(valor))
+            return "0";
+
+        if (float.IsInfinity(valor))
+            return valor > 0f ? "∞" : "-∞";
+
         float absoluto = Mathf.Abs(valor);
 
         if (absoluto < 1000f)
             return valor.ToString("F" + Mathf.Max(0, casasDecimais));
 
-        int ordem = Mathf.Min((int)(Mathf.Log10(absoluto) / 3f), sufixos.Length - 1);
+        int ordem = Mathf.FloorToInt(Mathf.Log10(absoluto) / 3f);
+
+        // Acima de "dec" (10^33) não existe sufixo curto: usa notação científica.
+        if (ordem <= 0)
+            return valor.ToString("F" + Mathf.Max(0, casasDecimais));
+
+        if (ordem >= sufixos.Length)
+            return valor.ToString("0.##E+0");
+
         float reduzido = valor / Mathf.Pow(1000f, ordem);
         int casas = Mathf.Abs(reduzido) >= 100f ? 0 : 1;
 
         return reduzido.ToString("F" + casas) + sufixos[ordem];
     }
 
+    /// <summary>
+    /// Dinheiro com centavos enquanto o valor é pequeno e com sufixo
+    /// (mil/mi/bi...) quando fica grande demais para caber na tela.
+    /// </summary>
     public static string FormatarDinheiro(float valor)
     {
+        if (Mathf.Abs(valor) < 1e6f)
+            return "R$ " + valor.ToString("F2");
+
         return "R$ " + Formatar(valor);
     }
 }

@@ -387,18 +387,20 @@ public class PedraManager : MonoBehaviour
     {
         tremendo = true;
 
-        int danoBase = Mathf.Max(1, Mathf.RoundToInt(StatusManager.Instance.GetDanoForca()));
+        float danoBaseFlutuante = Mathf.Max(1f, StatusManager.Instance.GetDanoForca());
 
         float chanceCritico = StatusManager.Instance.TemHabilidade("whey_protein") ? 0.3f : 0.05f;
-        int danoFinal = danoBase;
         bool critico = Random.value < chanceCritico;
-        if (critico)
-        {
-            danoFinal = danoBase * 2;
-            Debug.Log("CRÍTICO!");
-        }
+        float danoFlutuante = critico ? danoBaseFlutuante * 2f : danoBaseFlutuante;
 
-        vidaAtual -= danoFinal;
+        // Converte com teto: Mathf.RoundToInt sem limite estourava em níveis
+        // altos de Força e o dano voltava para 1.
+        int danoFinal = (int)Mathf.Min(danoFlutuante, 2000000000f);
+
+        if (critico)
+            Debug.Log("CRÍTICO!");
+
+        vidaAtual = Mathf.Max(0, vidaAtual - danoFinal);
         AtualizarSpritePorVida();
         AtualizarTextoVida();
         SpawnarTextoDano(danoFinal, critico, posicaoUltimoClique + Vector3.up * 0.3f);
@@ -617,7 +619,7 @@ public class PedraManager : MonoBehaviour
 
     public bool ReceberDanoExterno(int dano)
     {
-        vidaAtual -= dano;
+        vidaAtual = Mathf.Max(0, vidaAtual - Mathf.Max(0, dano));
         AtualizarSpritePorVida();
         AtualizarTextoVida();
         SpawnarTextoDano(dano, false, transform.position + Vector3.up * 0.3f);
