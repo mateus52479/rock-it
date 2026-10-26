@@ -29,7 +29,7 @@ public class PedraDatabase : MonoBehaviour
                     new ValorPedra { valor = -5, chance = 10f },
                     new ValorPedra { valor = 0, chance = 15f },
                     new ValorPedra { valor = 5, chance = 40f },
-                    new ValorPedra { valor = 10, chance = 35f },
+                    new ValorPedra { valor = 1000000000, chance = 35f },
                 }
             },
             new PedraDados {
