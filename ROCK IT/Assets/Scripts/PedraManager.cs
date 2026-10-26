@@ -47,6 +47,10 @@ public class PedraManager : MonoBehaviour
     [Tooltip("Empurrãozinho aleatório depois que a pedra pousa.")]
     public float impulsoAoPousar = 1.5f;
 
+    [Header("Ordem de desenho")]
+    [Tooltip("As máquinas desenham na ordem 0; a pedra fica na frente delas.")]
+    public int ordemDesenho = 10;
+
     private PedraDados dados;
     private int vidaAtual;
     private bool estaAtiva = false;
@@ -82,6 +86,26 @@ public class PedraManager : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
         PrepararColisor();
+        AplicarOrdemDeDesenho();
+    }
+
+    /// <summary>
+    /// As máquinas desenham na ordem 0. A pedra (e o texto de vida) sobem para
+    /// a ordem configurada em <see cref="ordemDesenho"/>, então nunca ficam
+    /// escondidas atrás de uma máquina. O contorno do Scanner usa a mesma
+    /// ordem da pedra e fica atrás dela pelo Z.
+    /// </summary>
+    void AplicarOrdemDeDesenho()
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.sortingOrder = ordemDesenho;
+
+        if (vidaText == null) return;
+
+        MeshRenderer desenhoDoTexto = vidaText.GetComponent<MeshRenderer>();
+
+        if (desenhoDoTexto != null)
+            desenhoDoTexto.sortingOrder = ordemDesenho + 1;
     }
 
     /// <summary>
@@ -118,6 +142,7 @@ public class PedraManager : MonoBehaviour
 
         AtualizarSpritePorVida();
         AtualizarTextoVida();
+        AplicarOrdemDeDesenho();
 
         MaquinaScanner.NotificarNovaPedra(this);
 
@@ -245,6 +270,7 @@ public class PedraManager : MonoBehaviour
 
         AtualizarSpritePorVida();
         AtualizarTextoVida();
+        AplicarOrdemDeDesenho();
 
         // Save antigo podia ter guardado uma pedra fora da mesa: traz de volta.
         transform.position = LimiteMesa.Limitar(transform.position, MetadeDoColisor());
@@ -656,6 +682,13 @@ public class PedraManager : MonoBehaviour
 
         if (tf == null) return;
 
+        // O texto flutuante nasce com a ordem do prefab (10). Sobe para ficar
+        // acima da pedra e do texto de vida, senão some atrás deles.
+        MeshRenderer desenhoDoTexto = obj.GetComponent<MeshRenderer>();
+
+        if (desenhoDoTexto != null)
+            desenhoDoTexto.sortingOrder = ordemDesenho + 2;
+
         string conteudo = "-" + dano;
         Color cor = critico ? new Color(1f, 0.2f, 0.2f) : Color.white;
         float tamanho = critico ? 8f : 5f;
@@ -807,6 +840,15 @@ public class PedraManager : MonoBehaviour
         }
 
         contornoScanner.enabled = true;
+
+        // A pedra pode ter mudado de ordem (ou o contorno foi criado antes de
+        // AplicarOrdemDeDesenho): mantém o contorno na mesma ordem da pedra,
+        // acima das máquinas e atrás do desenho da pedra pelo Z.
+        if (spriteRenderer != null)
+        {
+            contornoScanner.sortingLayerID = spriteRenderer.sortingLayerID;
+            contornoScanner.sortingOrder = spriteRenderer.sortingOrder;
+        }
 
         if (dados == null || dados.tabelaValores == null)
             return;
