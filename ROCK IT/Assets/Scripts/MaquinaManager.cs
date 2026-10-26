@@ -14,8 +14,7 @@ public class MaquinaManager : MonoBehaviour
     public MaquinaInversor maquinaInversor;
 
     [Header("Posições na mesa")]
-    [Tooltip("Cada máquina aparece no seu lugar só depois de comprada.")]
-    public Vector2 posicaoLixo = new Vector2(-7.4f, 3.9f);
+    [Tooltip("Cada máquina aparece no seu lugar só depois de comprada. A lixeira fica onde está na cena.")]
     public Vector2 posicaoScanner = new Vector2(-7.4f, 2.5f);
     public Vector2 posicaoQuebrador = new Vector2(-7.4f, 1.1f);
     public Vector2 posicaoInversor = new Vector2(-7.4f, -0.3f);
@@ -32,7 +31,8 @@ public class MaquinaManager : MonoBehaviour
     /// </summary>
     void PrepararMaquinas()
     {
-        Posicionar(maquinaLixo, posicaoLixo);
+        // A lixeira não é posicionada aqui: o lugar dela é o transform salvo
+        // na cena, para poder ser ajustado no editor.
         Posicionar(maquinaScanner, posicaoScanner);
         Posicionar(maquinaQuebrador, posicaoQuebrador);
         Posicionar(maquinaInversor, posicaoInversor);

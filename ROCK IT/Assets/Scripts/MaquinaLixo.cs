@@ -11,10 +11,6 @@ public class MaquinaLixo : MonoBehaviour, IMaquinaRecebedora
     [Tooltip("Lata de lixo de ouro (upgrade). Se ficar vazio, carrega de Resources/Sprites/Maquinas.")]
     public Sprite spriteLixoLuxo;
 
-    [Header("Tamanho na mesa")]
-    [Tooltip("Altura da lata em unidades de mundo. A largura acompanha o desenho.")]
-    public float alturaMundo = 1.25f;
-
     [Header("Cores de reserva")]
     [Tooltip("Usadas só se o sprite correspondente não for encontrado.")]
     public Color corLixoNormal = Color.gray;
@@ -92,28 +88,20 @@ public class MaquinaLixo : MonoBehaviour, IMaquinaRecebedora
         spriteRenderer.sprite = alvo;
         spriteRenderer.color = Color.white;
 
-        AjustarEscalaEColisor(alvo);
+        AjustarCollider(alvo);
     }
 
     /// <summary>
-    /// O desenho tem 8,49 unidades de altura com escala 1; encolhe até
-    /// <see cref="alturaMundo"/> e deixa o collider do tamanho da lata,
-    /// senão ele ficaria minúsculo junto com o transform.
+    /// O collider acompanha o desenho da lata. A escala é a do transform na
+    /// cena (posicionada e redimensionada no editor), então ela não é tocada.
     /// </summary>
-    void AjustarEscalaEColisor(Sprite sprite)
+    void AjustarCollider(Sprite sprite)
     {
-        float alturaSprite = sprite.bounds.size.y;
-        if (alturaSprite <= 0.0001f) return;
-
-        float escala = Mathf.Max(0.01f, alturaMundo) / alturaSprite;
-        transform.localScale = Vector3.one * escala;
-
         BoxCollider2D colisor = GetComponent<BoxCollider2D>();
-        if (colisor != null)
-        {
-            colisor.size = sprite.bounds.size;
-            colisor.offset = sprite.bounds.center;
-        }
+        if (colisor == null) return;
+
+        colisor.size = sprite.bounds.size;
+        colisor.offset = sprite.bounds.center;
     }
 
     public bool PodeReceber(PedraManager pedra)

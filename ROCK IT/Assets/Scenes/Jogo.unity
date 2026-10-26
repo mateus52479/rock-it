@@ -2410,6 +2410,12 @@ MonoBehaviour:
   dinheiro: 0
   textoDinheiro: {fileID: 1854984414}
   textoDiferenca: {fileID: 587098266}
+  duracaoMinima: 0.25
+  duracaoMaxima: 1.2
+  tamanhoFonteDinheiro: 42
+  tamanhoFonteDiferenca: 26
+  corMoeda: {r: 1, g: 0.79, b: 0.29, a: 1}
+  escalaDoPulso: 0.12
 --- !u!114 &488820261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3858,6 +3864,13 @@ MonoBehaviour:
   nivelForca: 1
   nivelSorte: 1
   nivelFortuna: 1
+  multiplicadorCusto: 1.6
+  custoMaximo: 1e+30
+  danoBase: 1
+  fatorDanoPorNivel: 1.75
+  danoMaximo: 1e+9
+  fatorFortunaPorNivel: 1.25
+  multiplicadorFortunaMaximo: 1e+15
 --- !u!4 &675704043
 Transform:
   m_ObjectHideFlags: 0
@@ -4060,6 +4073,9 @@ MonoBehaviour:
   maquinaScanner: {fileID: 375931449}
   maquinaQuebrador: {fileID: 1723791100}
   maquinaInversor: {fileID: 1762005769}
+  posicaoScanner: {x: -7.4, y: 2.5}
+  posicaoQuebrador: {x: -7.4, y: 1.1}
+  posicaoInversor: {x: -7.4, y: -0.3}
 --- !u!4 &703203005
 Transform:
   m_ObjectHideFlags: 0
@@ -9998,6 +10014,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 0}
   corVazia: {r: 1, g: 1, b: 1, a: 1}
   corOcupada: {r: 0, g: 1, b: 1, a: 1}
+  percentualDoDanoDoJogador: 0.2
 --- !u!212 &1723791101
 SpriteRenderer:
   serializedVersion: 3
@@ -11822,6 +11839,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaquinaLixo
   spriteRenderer: {fileID: 0}
+  spriteLixoNormal: {fileID: 0}
+  spriteLixoLuxo: {fileID: 0}
   corLixoNormal: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   corLixoLuxo: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!212 &1890434438
@@ -11893,8 +11912,8 @@ Transform:
   m_GameObject: {fileID: 1890434435}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.56, y: 4.23, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -6.91, y: -4.49, z: 0}
+  m_LocalScale: {x: 0.561, y: 0.561, z: 0.561}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
