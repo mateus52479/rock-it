@@ -67,6 +67,7 @@ public class PedraManager : MonoBehaviour
     private bool segurando = false;
     private bool arrastando = false;
     private float tempoSegurando = 0f;
+    private float tempoArrastoParado = 0f;
     private Vector3 offset;
     private Vector3 posicaoUltimoClique;
 
@@ -204,6 +205,9 @@ public class PedraManager : MonoBehaviour
 
         transform.position = destino;
         transform.rotation = Quaternion.identity;
+
+        // Bateu na mesa: o barulho sai junto com o achatamento do impacto.
+        AudioManager.PedraCaiu();
 
         yield return StartCoroutine(AchatarNoImpacto(escalaAlvo));
 
@@ -406,6 +410,8 @@ public class PedraManager : MonoBehaviour
     {
         if (arrastando)
         {
+            AudioManager.Arrasto(false);
+
             if (rb != null)
                 rb.isKinematic = false;
 
@@ -469,6 +475,7 @@ public class PedraManager : MonoBehaviour
         if (!arrastando && tempoSegurando >= tempoParaArrastar)
         {
             arrastando = true;
+            tempoArrastoParado = 0f;
 
             if (estaAtiva)
             {
@@ -491,10 +498,30 @@ public class PedraManager : MonoBehaviour
 
             // Mover o transform na mão ignora as paredes, então o arrasto é
             // limitado à mesa: a pedra para na borda em vez de escapar.
-            transform.position = LimiteMesa.Limitar(
+            Vector3 destino = LimiteMesa.Limitar(
                 posicaoMouse + offset,
                 MetadeDoColisor()
             );
+
+            // O barulho de arrasto acompanha o movimento: para quando a pedra
+            // encosta na borda ou o mouse fica parado. A pequena espera evita
+            // ligar/desligar aos tremeliques do mouse.
+            bool movendo = (destino - transform.position).sqrMagnitude > 0.0004f;
+
+            if (movendo)
+            {
+                tempoArrastoParado = 0f;
+                AudioManager.Arrasto(true);
+            }
+            else
+            {
+                tempoArrastoParado += Time.deltaTime;
+
+                if (tempoArrastoParado >= 0.12f)
+                    AudioManager.Arrasto(false);
+            }
+
+            transform.position = destino;
         }
     }
 
