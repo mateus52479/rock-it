@@ -20,11 +20,10 @@ public class SlotSaveUI : MonoBehaviour
     private Modo modo;
     private RectTransform containerLinhas;
 
-    private static readonly Color corFundo = new Color(0.06f, 0.06f, 0.09f, 0.88f);
-    private static readonly Color corPainel = new Color(0.12f, 0.12f, 0.16f, 0.99f);
-    private static readonly Color corLinha = new Color(0.18f, 0.18f, 0.24f, 1f);
-    private static readonly Color corBotao = new Color(0.22f, 0.55f, 0.30f, 1f);
-    private static readonly Color corBotaoApagar = new Color(0.55f, 0.20f, 0.20f, 1f);
+    private static readonly Color corFundo = new Color(0f, 0f, 0f, 0.82f);
+    private static readonly Color corPainel = Color.white;
+    private static readonly Color corLinha = Color.white;
+    private static readonly Color corBotao = TemaUI.PainelClaro;
 
     public static void Abrir(Modo modo)
     {
@@ -53,33 +52,50 @@ public class SlotSaveUI : MonoBehaviour
         fundo.raycastTarget = true;
 
         Image painel = UIUtil.CriarImagem(
-            raiz, "Painel", corPainel, new Vector2(1020f, 660f), Vector2.zero);
+            raiz, "Painel", corPainel, new Vector2(1020f, 680f), Vector2.zero);
 
-        UIUtil.CriarTexto(
+        TemaUI.AplicarPlaca(painel, TemaUI.SpritePainel(), Color.white);
+        TemaUI.Sombra(painel, 14f, 0.75f);
+
+        TextMeshProUGUI titulo = UIUtil.CriarTexto(
             painel.transform, "Titulo",
-            modo == Modo.NovoJogo ? "Novo jogo" : "Continuar",
-            38f, new Vector2(600f, 54f), new Vector2(0f, 280f))
-            .fontStyle = FontStyles.Bold;
+            modo == Modo.NovoJogo ? "NOVO JOGO" : "CONTINUAR",
+            38f, new Vector2(600f, 52f), new Vector2(0f, 286f));
 
-        UIUtil.CriarTexto(
+        TemaUI.EstilizarTexto(
+            titulo, 38f, TemaUI.TextoForte, FontStyles.Normal,
+            TextAlignmentOptions.Center, 3f);
+
+        TemaUI.Sombra(titulo, 3f, 0.55f);
+
+        TextMeshProUGUI subtitulo = UIUtil.CriarTexto(
             painel.transform, "Subtitulo",
             modo == Modo.NovoJogo
                 ? "Escolha o slot onde a nova partida vai ser salva."
                 : "Escolha o slot que você quer carregar.",
-            20f, new Vector2(820f, 34f), new Vector2(0f, 240f))
-            .color = new Color(0.75f, 0.75f, 0.80f);
+            19f, new Vector2(820f, 30f), new Vector2(0f, 244f));
 
-        UIUtil.CriarBotao(
+        subtitulo.color = TemaUI.TextoSuave;
+
+        Button fechar = UIUtil.CriarBotao(
             painel.transform, "BotaoFechar", "X",
-            new Vector2(46f, 46f), new Vector2(470f, 292f),
-            new Color(0.30f, 0.30f, 0.38f), Fechar);
+            new Vector2(42f, 42f), Vector2.zero,
+            Color.white, Fechar);
+
+        TemaUI.EstilizarBotao(fechar, TemaUI.EstiloBotao.Perigo, 19f);
+
+        RectTransform fecharRT = (RectTransform)fechar.transform;
+        fecharRT.anchorMin = new Vector2(1f, 1f);
+        fecharRT.anchorMax = new Vector2(1f, 1f);
+        fecharRT.pivot = new Vector2(0.5f, 0.5f);
+        fecharRT.anchoredPosition = new Vector2(-34f, -32f);
 
         GameObject container = new GameObject("Linhas", typeof(RectTransform));
         container.transform.SetParent(painel.transform, false);
 
         containerLinhas = container.GetComponent<RectTransform>();
         containerLinhas.sizeDelta = new Vector2(940f, 440f);
-        containerLinhas.anchoredPosition = new Vector2(0f, -30f);
+        containerLinhas.anchoredPosition = new Vector2(0f, -34f);
 
         AtualizarLinhas();
     }
@@ -108,11 +124,16 @@ public class SlotSaveUI : MonoBehaviour
             new Vector2(940f, 130f),
             new Vector2(0f, 150f - (slot - 1) * 145f));
 
-        UIUtil.CriarTexto(
+        TemaUI.AplicarPlaca(linha, TemaUI.SpriteLinhaItem(), Color.white);
+
+        TextMeshProUGUI tituloSlot = UIUtil.CriarTexto(
             linha.transform, "TituloSlot", "Slot " + slot,
-            28f, new Vector2(240f, 40f), new Vector2(-330f, 28f),
-            TextAlignmentOptions.Left)
-            .fontStyle = FontStyles.Bold;
+            26f, new Vector2(240f, 38f), new Vector2(-330f, 28f),
+            TextAlignmentOptions.Left);
+
+        TemaUI.EstilizarTexto(
+            tituloSlot, 26f, TemaUI.TextoForte, FontStyles.Bold,
+            TextAlignmentOptions.Left, 1f);
 
         string textoResumo = resumo.existe
             ? NumeroUtil.FormatarDinheiro(resumo.dinheiro)
@@ -122,12 +143,12 @@ public class SlotSaveUI : MonoBehaviour
 
         TextMeshProUGUI resumoTexto = UIUtil.CriarTexto(
             linha.transform, "Resumo", textoResumo,
-            20f, new Vector2(580f, 40f), new Vector2(-160f, -26f),
+            18f, new Vector2(580f, 32f), new Vector2(-160f, -28f),
             TextAlignmentOptions.Left);
 
         resumoTexto.color = resumo.existe
-            ? new Color(0.85f, 0.85f, 0.90f)
-            : new Color(0.55f, 0.55f, 0.60f);
+            ? TemaUI.TextoSuave
+            : TemaUI.TextoFraco;
 
         string textoPrincipal;
         bool habilitado;
@@ -145,17 +166,19 @@ public class SlotSaveUI : MonoBehaviour
 
         Button principal = UIUtil.CriarBotao(
             linha.transform, "BotaoPrincipal", textoPrincipal,
-            new Vector2(170f, 56f), new Vector2(250f, 0f),
+            new Vector2(170f, 50f), new Vector2(250f, 0f),
             corBotao, () => EscolherSlot(slot));
 
         principal.interactable = habilitado;
+        TemaUI.EstilizarBotao(principal, TemaUI.EstiloBotao.Verde, 18f);
 
         Button apagar = UIUtil.CriarBotao(
             linha.transform, "BotaoApagar", "Apagar",
-            new Vector2(120f, 56f), new Vector2(400f, 0f),
-            corBotaoApagar, () => ConfirmarApagar(slot));
+            new Vector2(120f, 50f), new Vector2(404f, 0f),
+            TemaUI.Vermelho, () => ConfirmarApagar(slot));
 
         apagar.interactable = resumo.existe;
+        TemaUI.EstilizarBotao(apagar, TemaUI.EstiloBotao.Perigo, 16f);
     }
 
     void EscolherSlot(int slot)
@@ -206,45 +229,55 @@ public class SlotSaveUI : MonoBehaviour
 
     void Confirmar(string titulo, string detalhe, System.Action aoConfirmar)
     {
-        Transform painel = transform.Find("Painel");
-
-        if (painel == null)
-        {
-            aoConfirmar();
-            return;
-        }
-
         Image fundo = UIUtil.CriarImagem(
-            painel, "Confirmacao", new Color(0f, 0f, 0f, 0.82f),
-            new Vector2(1020f, 660f), Vector2.zero);
+            transform, "Confirmacao", new Color(0f, 0f, 0f, 0.78f),
+            Vector2.zero, Vector2.zero);
+
+        UIUtil.Esticar(fundo.rectTransform);
+        fundo.raycastTarget = true;
 
         GameObject confirmacao = fundo.gameObject;
 
-        UIUtil.CriarTexto(
-            confirmacao.transform, "Titulo", titulo,
-            32f, new Vector2(860f, 50f), new Vector2(0f, 90f))
-            .fontStyle = FontStyles.Bold;
+        Image caixa = UIUtil.CriarImagem(
+            fundo.transform, "Caixa", Color.white,
+            new Vector2(620f, 280f), Vector2.zero);
 
-        UIUtil.CriarTexto(
-            confirmacao.transform, "Detalhe", detalhe,
-            22f, new Vector2(820f, 40f), new Vector2(0f, 40f))
-            .color = new Color(0.80f, 0.80f, 0.85f);
+        TemaUI.AplicarPlaca(caixa, TemaUI.SpritePainel(), Color.white);
+        TemaUI.Sombra(caixa, 10f, 0.70f);
 
-        UIUtil.CriarBotao(
-            confirmacao.transform, "Sim", "Sim",
-            new Vector2(190f, 58f), new Vector2(-110f, -60f),
-            corBotaoApagar,
+        TextMeshProUGUI tituloConfirmacao = UIUtil.CriarTexto(
+            caixa.transform, "Titulo", titulo,
+            30f, new Vector2(540f, 46f), new Vector2(0f, 80f));
+
+        TemaUI.EstilizarTexto(
+            tituloConfirmacao, 30f, TemaUI.TextoForte, FontStyles.Normal,
+            TextAlignmentOptions.Center);
+
+        TextMeshProUGUI detalheConfirmacao = UIUtil.CriarTexto(
+            caixa.transform, "Detalhe", detalhe,
+            19f, new Vector2(520f, 36f), new Vector2(0f, 26f));
+
+        detalheConfirmacao.color = TemaUI.TextoSuave;
+
+        Button sim = UIUtil.CriarBotao(
+            caixa.transform, "Sim", "Sim",
+            new Vector2(190f, 54f), new Vector2(-110f, -72f),
+            TemaUI.Vermelho,
             () =>
             {
                 Destroy(confirmacao);
                 aoConfirmar();
             });
 
-        UIUtil.CriarBotao(
-            confirmacao.transform, "Nao", "Não",
-            new Vector2(190f, 58f), new Vector2(110f, -60f),
-            new Color(0.30f, 0.30f, 0.38f),
+        TemaUI.EstilizarBotao(sim, TemaUI.EstiloBotao.Perigo, 20f);
+
+        Button nao = UIUtil.CriarBotao(
+            caixa.transform, "Nao", "Não",
+            new Vector2(190f, 54f), new Vector2(110f, -72f),
+            Color.white,
             () => Destroy(confirmacao));
+
+        TemaUI.EstilizarBotao(nao, TemaUI.EstiloBotao.Secundario, 20f);
     }
 
     void Fechar()

@@ -13,6 +13,87 @@ public class ItemMaquinaUI : MonoBehaviour
 
     private MaquinaDados dados;
 
+    void Awake()
+    {
+        OrganizarLinha();
+        AplicarEstilo();
+    }
+
+    void OrganizarLinha()
+    {
+        TemaUI.PrepararLinha(transform, 104f);
+
+        Image fundo = GetComponent<Image>();
+        if (fundo != null)
+            TemaUI.AplicarPlaca(fundo, TemaUI.SpriteLinhaItem(), Color.white);
+
+        RectTransform coluna = TemaUI.ColunaTextos(transform, 2f);
+
+        if (textoNome != null)
+        {
+            textoNome.rectTransform.SetParent(coluna, false);
+            TemaUI.AjustarAltura(textoNome, 26f);
+            textoNome.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        if (textoDescricao != null)
+        {
+            textoDescricao.rectTransform.SetParent(coluna, false);
+            TemaUI.AjustarAltura(textoDescricao, 38f);
+            textoDescricao.textWrappingMode = TextWrappingModes.Normal;
+            textoDescricao.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        if (textoPreco != null)
+        {
+            textoPreco.rectTransform.SetParent(coluna, false);
+            TemaUI.AjustarAltura(textoPreco, 22f);
+            textoPreco.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        if (imagemMaquina != null)
+        {
+            imagemMaquina.rectTransform.SetParent(transform, false);
+            TemaUI.AjustarAltura(imagemMaquina, 76f);
+            TemaUI.AjustarLargura(imagemMaquina, 76f);
+            imagemMaquina.preserveAspect = true;
+            imagemMaquina.raycastTarget = false;
+        }
+
+        if (botaoAcao != null)
+        {
+            botaoAcao.transform.SetParent(transform, false);
+            TemaUI.AjustarAltura(botaoAcao, 42f);
+            TemaUI.AjustarLargura(botaoAcao, 118f);
+        }
+
+        if (imagemMaquina != null)
+            imagemMaquina.transform.SetAsLastSibling();
+
+        coluna.SetAsLastSibling();
+
+        if (botaoAcao != null)
+            botaoAcao.transform.SetAsLastSibling();
+    }
+
+    void AplicarEstilo()
+    {
+        TemaUI.EstilizarTexto(
+            textoNome, 20f, TemaUI.TextoForte, FontStyles.Bold,
+            TextAlignmentOptions.Left);
+
+        TemaUI.EstilizarTexto(
+            textoDescricao, 13f, TemaUI.TextoSuave, FontStyles.Normal,
+            TextAlignmentOptions.Left);
+
+        TemaUI.EstilizarTexto(
+            textoPreco, 16f, TemaUI.Acento, FontStyles.Bold,
+            TextAlignmentOptions.Left);
+
+        if (botaoAcao != null)
+            TemaUI.EstilizarBotao(botaoAcao, TemaUI.EstiloBotao.Secundario, 14f);
+    }
+
     void Update()
     {
         AtualizarEstado();
@@ -21,10 +102,39 @@ public class ItemMaquinaUI : MonoBehaviour
     public void Configurar(MaquinaDados maquina)
     {
         dados = maquina;
-        imagemMaquina.color = Color.gray; // placeholder
-        textoNome.text = maquina.nome;
-        textoDescricao.text = maquina.descricao;
-        botaoAcao.onClick.AddListener(AcaoBotao);
+
+        if (imagemMaquina != null)
+        {
+            Sprite icone = null;
+
+            if (maquina.id == "lixo")
+                icone = Resources.Load<Sprite>("Sprites/Maquinas/LATA DE LIXO");
+            else if (maquina.id == "lixo_luxo")
+                icone = Resources.Load<Sprite>("Sprites/Maquinas/LATA DE LIXO DE OURO");
+
+            if (icone != null)
+            {
+                imagemMaquina.sprite = icone;
+                imagemMaquina.color = Color.white;
+            }
+            else
+            {
+                imagemMaquina.sprite = TemaUI.SpriteEngrenagem();
+                imagemMaquina.color = TemaUI.TextoSuave;
+            }
+
+            imagemMaquina.preserveAspect = true;
+        }
+
+        if (textoNome != null)
+            textoNome.text = maquina.nome;
+
+        if (textoDescricao != null)
+            textoDescricao.text = maquina.descricao;
+
+        if (botaoAcao != null)
+            botaoAcao.onClick.AddListener(AcaoBotao);
+
         AtualizarEstado();
     }
 
@@ -37,7 +147,7 @@ public class ItemMaquinaUI : MonoBehaviour
         {
             textoBotao.text = "Em breve";
             textoPreco.text = "—";
-            textoPreco.color = Color.gray;
+            textoPreco.color = TemaUI.TextoFraco;
             botaoAcao.interactable = false;
             return;
         }
@@ -60,8 +170,8 @@ public class ItemMaquinaUI : MonoBehaviour
                     textoBotao.text = "Evoluir";
                     textoPreco.text = "R$ " + upgrade.preco;
                     textoPreco.color = GameManager.Instance.dinheiro >= upgrade.preco
-                        ? new Color(0.2f, 0.9f, 0.2f)
-                        : new Color(0.9f, 0.2f, 0.2f);
+                        ? TemaUI.Acento
+                        : TemaUI.Vermelho;
                     botaoAcao.interactable = true;
                     return;
                 }
@@ -69,14 +179,14 @@ public class ItemMaquinaUI : MonoBehaviour
 
             textoBotao.text = "Comprado";
             textoPreco.text = "✓";
-            textoPreco.color = new Color(0.2f, 0.9f, 0.2f);
+            textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }
         else if (comprada || temUpgrade)
         {
             textoBotao.text = "Comprado";
             textoPreco.text = "✓";
-            textoPreco.color = new Color(0.2f, 0.9f, 0.2f);
+            textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }
         else
@@ -84,8 +194,8 @@ public class ItemMaquinaUI : MonoBehaviour
             textoBotao.text = "Comprar";
             textoPreco.text = "R$ " + dados.preco;
             textoPreco.color = GameManager.Instance.dinheiro >= dados.preco
-                ? new Color(0.2f, 0.9f, 0.2f)
-                : new Color(0.9f, 0.2f, 0.2f);
+                ? TemaUI.Acento
+                : TemaUI.Vermelho;
             botaoAcao.interactable = true;
         }
     }

@@ -124,7 +124,7 @@ public class ArvoreHabilidadesUI : MonoBehaviour, IPointerEnterHandler, IPointer
         linhaObj.transform.SetAsFirstSibling();
 
         Image img = linhaObj.AddComponent<Image>();
-        img.color = new Color(0.8f, 0.7f, 0.3f, 1f);
+        img.color = new Color(0.42f, 0.41f, 0.48f, 0.90f);
 
         Vector2 posA = de.anchoredPosition;
         Vector2 posB = para.anchoredPosition;
@@ -133,7 +133,7 @@ public class ArvoreHabilidadesUI : MonoBehaviour, IPointerEnterHandler, IPointer
         float distancia = direcao.magnitude;
         float angulo = Mathf.Atan2(direcao.y, direcao.x) * Mathf.Rad2Deg;
 
-        linhaRT.sizeDelta = new Vector2(distancia, 4f);
+        linhaRT.sizeDelta = new Vector2(distancia, 3f);
         linhaRT.anchoredPosition = posA + direcao * 0.5f;
         linhaRT.localRotation = Quaternion.Euler(0, 0, angulo);
         linhaRT.pivot = new Vector2(0.5f, 0.5f);

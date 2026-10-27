@@ -11,6 +11,79 @@ public class ItemStatusUI : MonoBehaviour
 
     private int tipoStatus; // 0=Forca, 1=Sorte, 2=Fortuna
 
+    void Awake()
+    {
+        OrganizarLinha();
+        AplicarEstilo();
+    }
+
+    void OrganizarLinha()
+    {
+        TemaUI.PrepararLinha(transform, 96f);
+
+        Image fundo = GetComponent<Image>();
+        if (fundo != null)
+            TemaUI.AplicarPlaca(fundo, TemaUI.SpriteLinhaItem(), Color.white);
+
+        RectTransform coluna = TemaUI.ColunaTextos(transform, 1f);
+
+        if (textoNome != null)
+        {
+            textoNome.rectTransform.SetParent(coluna, false);
+            TemaUI.AjustarAltura(textoNome, 26f);
+            textoNome.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        if (textoNivel != null)
+        {
+            textoNivel.rectTransform.SetParent(coluna, false);
+            TemaUI.AjustarAltura(textoNivel, 42f);
+            textoNivel.textWrappingMode = TextWrappingModes.Normal;
+        }
+
+        if (textoCusto != null)
+        {
+            textoCusto.rectTransform.SetParent(transform, false);
+            TemaUI.AjustarAltura(textoCusto, 40f);
+            TemaUI.AjustarLargura(textoCusto, 170f);
+            textoCusto.alignment = TextAlignmentOptions.Right;
+            textoCusto.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        if (botaoUpgrade != null)
+        {
+            botaoUpgrade.transform.SetParent(transform, false);
+            TemaUI.AjustarAltura(botaoUpgrade, 42f);
+            TemaUI.AjustarLargura(botaoUpgrade, 128f);
+        }
+
+        coluna.SetAsLastSibling();
+
+        if (textoCusto != null)
+            textoCusto.transform.SetAsLastSibling();
+
+        if (botaoUpgrade != null)
+            botaoUpgrade.transform.SetAsLastSibling();
+    }
+
+    void AplicarEstilo()
+    {
+        TemaUI.EstilizarTexto(
+            textoNome, 20f, TemaUI.TextoForte, FontStyles.Bold,
+            TextAlignmentOptions.Left);
+
+        TemaUI.EstilizarTexto(
+            textoNivel, 13f, TemaUI.TextoSuave, FontStyles.Normal,
+            TextAlignmentOptions.Left);
+
+        TemaUI.EstilizarTexto(
+            textoCusto, 18f, TemaUI.Texto, FontStyles.Bold,
+            TextAlignmentOptions.Right);
+
+        if (botaoUpgrade != null)
+            TemaUI.EstilizarBotao(botaoUpgrade, TemaUI.EstiloBotao.Verde, 14f);
+    }
+
     public void Configurar(int tipo)
     {
         tipoStatus = tipo;
@@ -47,8 +120,8 @@ public class ItemStatusUI : MonoBehaviour
     {
         textoCusto.text = NumeroUtil.FormatarDinheiro(custo);
         textoCusto.color = GameManager.Instance.dinheiro >= custo
-            ? new Color(0.2f, 0.9f, 0.2f)
-            : new Color(0.9f, 0.2f, 0.2f);
+            ? TemaUI.Acento
+            : TemaUI.Vermelho;
     }
 
     void Update()

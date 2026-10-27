@@ -363,12 +363,12 @@ public class GameManager : MonoBehaviour
         if (valor >= 0)
         {
             textoDiferenca.text = "+" + FormatarDiferenca(valor);
-            textoDiferenca.color = new Color(0.2f, 0.9f, 0.2f, 1f);
+            textoDiferenca.color = new Color(0.475f, 0.878f, 0.416f, 1f);
         }
         else
         {
             textoDiferenca.text = "-" + FormatarDiferenca(valor);
-            textoDiferenca.color = new Color(0.9f, 0.2f, 0.2f, 1f);
+            textoDiferenca.color = new Color(0.886f, 0.424f, 0.376f, 1f);
         }
 
         // Começa embaixo do valor e sobe devagar enquanto fica visível.

@@ -14,9 +14,32 @@ public class NoHabilidadeUI : MonoBehaviour,
     private HabilidadeDados dados;
     private ArvoreHabilidadesUI arvore;
 
-    private Color corDesbloqueado = new Color(0.2f, 0.8f, 0.2f);
-    private Color corDisponivel = new Color(0.9f, 0.8f, 0.2f);
-    private Color corBloqueado = new Color(0.4f, 0.4f, 0.4f);
+    void Awake()
+    {
+        if (fundoNo != null)
+        {
+            TemaUI.AplicarPlaca(
+                fundoNo, TemaUI.SpritePlacaNeutra(), fundoNo.color);
+        }
+
+        if (textoNome != null)
+        {
+            TemaUI.EstilizarTexto(
+                textoNome, 14f, TemaUI.Texto, FontStyles.Bold, TextAlignmentOptions.Center);
+            textoNome.textWrappingMode = TextWrappingModes.Normal;
+        }
+
+        if (textoCusto != null)
+        {
+            TemaUI.EstilizarTexto(
+                textoCusto, 13f, TemaUI.TextoForte, FontStyles.Bold,
+                TextAlignmentOptions.Center);
+        }
+    }
+
+    private Color corDesbloqueado = new Color(0.30f, 0.42f, 0.22f);
+    private Color corDisponivel = new Color(0.56f, 0.52f, 0.20f);
+    private Color corBloqueado = new Color(0.23f, 0.22f, 0.25f);
 
     public void Configurar(HabilidadeDados d, ArvoreHabilidadesUI a)
     {
@@ -37,22 +60,22 @@ public class NoHabilidadeUI : MonoBehaviour,
         if (desbloqueado)
         {
             fundoNo.color = corDesbloqueado;
-            textoCusto.text = "✓";
-            textoCusto.color = Color.white;
+            textoCusto.text = "OK";
+            textoCusto.color = TemaUI.TextoForte;
         }
         else if (disponivel)
         {
             fundoNo.color = corDisponivel;
             textoCusto.text = "R$ " + dados.custo;
             textoCusto.color = GameManager.Instance.dinheiro >= dados.custo
-                ? new Color(0.2f, 0.9f, 0.2f)
-                : new Color(0.9f, 0.2f, 0.2f);
+                ? TemaUI.Acento
+                : TemaUI.Vermelho;
         }
         else
         {
             fundoNo.color = corBloqueado;
-            textoCusto.text = "[X]";
-            textoCusto.color = Color.white;
+            textoCusto.text = "X";
+            textoCusto.color = TemaUI.TextoFraco;
         }
     }
 

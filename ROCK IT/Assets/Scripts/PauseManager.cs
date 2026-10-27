@@ -32,6 +32,13 @@ public class PauseManager : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    /// <summary>Chamado pelo botão "Salvar" do menu de pausa.</summary>
+    public void Salvar()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.Salvar();
+    }
+
     public void SalvarEVoltar()
     {
         SaveManager.Instance.Salvar();

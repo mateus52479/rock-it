@@ -33,9 +33,12 @@ public class BalaoDialogo : MonoBehaviour
     {
         Image fundo = UIUtil.CriarImagem(
             canvas, "Balao",
-            new Color(0.10f, 0.10f, 0.14f, 0.96f),
-            new Vector2(480f, 230f),
+            Color.white,
+            new Vector2(500f, 240f),
             Vector2.zero);
+
+        TemaUI.AplicarPlaca(fundo, TemaUI.SpritePainelFino(), Color.white);
+        TemaUI.Sombra(fundo, 8f, 0.55f);
 
         BalaoDialogo balao = fundo.gameObject.AddComponent<BalaoDialogo>();
 
@@ -45,28 +48,42 @@ public class BalaoDialogo : MonoBehaviour
 
         balao.textoNome = UIUtil.CriarTexto(
             fundo.transform, "Nome", "",
-            22f, new Vector2(440f, 28f), new Vector2(0f, 90f),
+            20f, new Vector2(460f, 28f), new Vector2(0f, 92f),
             TextAlignmentOptions.Left);
 
-        balao.textoNome.color = new Color(1f, 0.85f, 0.3f);
-        balao.textoNome.fontStyle = FontStyles.Bold;
+        TemaUI.EstilizarTexto(
+            balao.textoNome, 20f, TemaUI.TextoForte, FontStyles.Bold,
+            TextAlignmentOptions.Left, 2f);
 
         balao.texto = UIUtil.CriarTexto(
             fundo.transform, "Texto", "",
-            balao.tamanhoFonteTexto, new Vector2(440f, 110f), new Vector2(0f, 20f),
+            balao.tamanhoFonteTexto, new Vector2(460f, 122f), new Vector2(0f, 14f),
             TextAlignmentOptions.TopLeft);
 
+        TemaUI.EstilizarTexto(
+            balao.texto, balao.tamanhoFonteTexto, TemaUI.Texto,
+            FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        // O texto de cada passo tem tamanhos diferentes; o auto-size garante
+        // que falas longas caibam no balão sem vazar.
+        balao.texto.enableAutoSizing = true;
+        balao.texto.fontSizeMin = 16f;
+        balao.texto.fontSizeMax = balao.tamanhoFonteTexto;
+
         balao.botaoContinuar = UIUtil.CriarBotao(
-            fundo.transform, "Continuar", "Continuar ▶",
-            new Vector2(170f, 40f), new Vector2(130f, -85f),
-            new Color(0.22f, 0.55f, 0.30f),
+            fundo.transform, "Continuar", "Continuar >",
+            new Vector2(180f, 40f), new Vector2(128f, -88f),
+            Color.white,
             balao.AoClicarContinuar);
+
+        TemaUI.EstilizarBotao(
+            balao.botaoContinuar, TemaUI.EstiloBotao.Primario, 18f);
 
         balao.containerRespostas = UIUtil.CriarRetangulo(
             fundo.transform, "Respostas");
 
-        balao.containerRespostas.sizeDelta = new Vector2(440f, 50f);
-        balao.containerRespostas.anchoredPosition = new Vector2(0f, -85f);
+        balao.containerRespostas.sizeDelta = new Vector2(460f, 50f);
+        balao.containerRespostas.anchoredPosition = new Vector2(0f, -88f);
 
         balao.painel.gameObject.SetActive(false);
 
@@ -110,7 +127,10 @@ public class BalaoDialogo : MonoBehaviour
     {
         if (texto == null) return;
 
-        texto.fontSize = tamanho > 0f ? tamanho : tamanhoFonteTexto;
+        float alvo = tamanho > 0f ? tamanho : tamanhoFonteTexto;
+        texto.fontSizeMax = alvo;
+        texto.fontSize = alvo;
+        texto.fontSizeMin = Mathf.Min(16f, alvo);
     }
 
     public IEnumerator Digitar(string personagem, string conteudo)
@@ -181,9 +201,10 @@ public class BalaoDialogo : MonoBehaviour
                 respostas[i],
                 new Vector2(160f, 44f),
                 new Vector2(x, 0f),
-                new Color(0.24f, 0.42f, 0.62f),
+                Color.white,
                 () => ultimaResposta = indice);
 
+            TemaUI.EstilizarBotao(botao, TemaUI.EstiloBotao.Secundario, 16f);
             botao.gameObject.SetActive(true);
         }
 

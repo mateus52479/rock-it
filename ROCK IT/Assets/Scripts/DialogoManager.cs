@@ -66,6 +66,8 @@ public class DialogoManager : MonoBehaviour
             new Color(0.30f, 0.30f, 0.38f),
             Pular);
 
+        TemaUI.EstilizarBotao(botaoPular, TemaUI.EstiloBotao.Fantasma, 17f);
+
         botaoPular.gameObject.SetActive(false);
     }
 
