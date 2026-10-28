@@ -17,6 +17,26 @@ public class ItemMaquinaUI : MonoBehaviour
     {
         OrganizarLinha();
         AplicarEstilo();
+        Traducao.OnIdiomaMudou += AtualizarTextos;
+    }
+
+    void OnDestroy()
+    {
+        Traducao.OnIdiomaMudou -= AtualizarTextos;
+    }
+
+    void AtualizarTextos()
+    {
+        if (dados == null)
+            return;
+
+        if (textoNome != null)
+            textoNome.text = Traducao.T(dados.nome);
+
+        if (textoDescricao != null)
+            textoDescricao.text = Traducao.T(dados.descricao);
+
+        AtualizarEstado();
     }
 
     void OrganizarLinha()
@@ -127,10 +147,10 @@ public class ItemMaquinaUI : MonoBehaviour
         }
 
         if (textoNome != null)
-            textoNome.text = maquina.nome;
+            textoNome.text = Traducao.T(maquina.nome);
 
         if (textoDescricao != null)
-            textoDescricao.text = maquina.descricao;
+            textoDescricao.text = Traducao.T(maquina.descricao);
 
         if (botaoAcao != null)
             botaoAcao.onClick.AddListener(AcaoBotao);
@@ -145,7 +165,7 @@ public class ItemMaquinaUI : MonoBehaviour
         // Máquina ainda não implementada: aparece na loja, mas não dá para comprar.
         if (!dados.disponivel)
         {
-            textoBotao.text = "Em breve";
+            textoBotao.text = Traducao.T("Em breve");
             textoPreco.text = "—";
             textoPreco.color = TemaUI.TextoFraco;
             botaoAcao.interactable = false;
@@ -167,7 +187,7 @@ public class ItemMaquinaUI : MonoBehaviour
                 MaquinaDados upgrade = MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
                 if (upgrade != null && upgrade.disponivel)
                 {
-                    textoBotao.text = "Evoluir";
+                    textoBotao.text = Traducao.T("Evoluir");
                     textoPreco.text = "R$ " + upgrade.preco;
                     textoPreco.color = GameManager.Instance.dinheiro >= upgrade.preco
                         ? TemaUI.Acento
@@ -177,21 +197,21 @@ public class ItemMaquinaUI : MonoBehaviour
                 }
             }
 
-            textoBotao.text = "Comprado";
+            textoBotao.text = Traducao.T("Comprado");
             textoPreco.text = "✓";
             textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }
         else if (comprada || temUpgrade)
         {
-            textoBotao.text = "Comprado";
+            textoBotao.text = Traducao.T("Comprado");
             textoPreco.text = "✓";
             textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }
         else
         {
-            textoBotao.text = "Comprar";
+            textoBotao.text = Traducao.T("Comprar");
             textoPreco.text = "R$ " + dados.preco;
             textoPreco.color = GameManager.Instance.dinheiro >= dados.preco
                 ? TemaUI.Acento

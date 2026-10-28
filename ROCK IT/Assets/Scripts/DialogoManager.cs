@@ -110,11 +110,13 @@ public class DialogoManager : MonoBehaviour
 
             balao.DefinirTamanhoTexto(passo.tamanhoTexto);
 
-            yield return balao.Digitar(passo.personagem, passo.texto);
+            yield return balao.Digitar(
+                Traducao.T(passo.personagem),
+                Traducao.T(passo.texto));
 
             if (passo.esperar == "pergunta")
             {
-                yield return balao.EscolherResposta(passo.respostas);
+                yield return balao.EscolherResposta(TraduzirRespostas(passo.respostas));
 
                 if (balao.UltimaResposta != 0)
                 {
@@ -223,6 +225,23 @@ public class DialogoManager : MonoBehaviour
     void AoComprarPedra(PedraDados pedra)
     {
         comprouPedra = true;
+    }
+
+    /// <summary>
+    /// As respostas ficam em português no roteiro (é a chave do JSON de
+    /// tradução); aqui só as converte para o idioma em uso.
+    /// </summary>
+    static string[] TraduzirRespostas(string[] respostas)
+    {
+        if (respostas == null)
+            return null;
+
+        string[] traduzidas = new string[respostas.Length];
+
+        for (int i = 0; i < respostas.Length; i++)
+            traduzidas[i] = Traducao.T(respostas[i]);
+
+        return traduzidas;
     }
 
     void AoQuebrarPedra(PedraManager pedra)

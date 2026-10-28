@@ -98,7 +98,7 @@ public static class UIUtil
         rt.anchoredPosition = posicao;
 
         TextMeshProUGUI tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
-        tmp.text = texto;
+        tmp.text = Traducao.T(texto);
         tmp.fontSize = tamanhoFonte;
         tmp.alignment = alinhamento;
         tmp.color = Color.white;

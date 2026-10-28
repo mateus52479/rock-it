@@ -20,6 +20,45 @@ public class ItemLoja : MonoBehaviour
     {
         OrganizarLinha();
         AplicarEstilo();
+        AtualizarRotuloBotao();
+        Traducao.OnIdiomaMudou += AtualizarTextos;
+    }
+
+    void OnDestroy()
+    {
+        Traducao.OnIdiomaMudou -= AtualizarTextos;
+    }
+
+    /// <summary>
+    /// O texto "COMPRAR" vem do prefab; traduz na hora porque o item nasce
+    /// depois que a cena já passou pelo tradutor.
+    /// </summary>
+    void AtualizarRotuloBotao()
+    {
+        if (botaoComprar == null)
+            return;
+
+        TextMeshProUGUI rotulo =
+            botaoComprar.GetComponentInChildren<TextMeshProUGUI>(true);
+
+        if (rotulo != null)
+            rotulo.text = Traducao.T("COMPRAR");
+    }
+
+    void AtualizarTextos()
+    {
+        AtualizarRotuloBotao();
+
+        if (dados == null)
+            return;
+
+        if (textoNome != null)
+            textoNome.text = Traducao.T(dados.nome);
+
+        if (textoDescricao != null)
+            textoDescricao.text = Traducao.T(dados.descricao);
+
+        AtualizarPreco();
     }
 
     /// <summary>
@@ -127,10 +166,10 @@ public class ItemLoja : MonoBehaviour
         }
 
         if (textoNome != null)
-            textoNome.text = pedra.nome;
+            textoNome.text = Traducao.T(pedra.nome);
 
         if (textoDescricao != null)
-            textoDescricao.text = pedra.descricao;
+            textoDescricao.text = Traducao.T(pedra.descricao);
 
         if (botaoComprar != null)
             botaoComprar.onClick.AddListener(() => LojaManager.Instance.ComprarPedra(dados));
@@ -161,7 +200,7 @@ public class ItemLoja : MonoBehaviour
         }
 
         string texto = gratis
-            ? "Grátis"
+            ? Traducao.T("Grátis")
             : "R$ " + NumeroUtil.Formatar(preco, 0);
 
         // Só reescreve quando muda, para não gerar lixo a cada frame.

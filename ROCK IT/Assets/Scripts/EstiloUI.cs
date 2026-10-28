@@ -13,6 +13,13 @@ using TMPro;
 public static class EstiloUI
 {
     /// <summary>
+    /// Liga o fundo de madeira, as latas e as pedras da tela de início.
+    /// Desligado por enquanto: o menu fica só com os botões, sobre o azul
+    /// da câmera. Basta trocar para true que a cena decorada volta.
+    /// </summary>
+    private static readonly bool MenuDecorado = false;
+
+    /// <summary>
     /// RuntimeInitializeOnLoadMethod só roda na primeira cena; para vestir
     /// também o Jogo quando ele é carregado depois do menu, um objeto
     /// persistente escuta sceneLoaded.
@@ -37,6 +44,10 @@ public static class EstiloUI
             EstilizarMenu(canvas);
         else if (cena == "Jogo")
             EstilizarJogo(canvas);
+
+        // Depois do tema, todos os textos da cena passam pelo tradutor. Os
+        // rótulos montados aqui em cima também são traduzidos.
+        Traducao.AplicarEmTudo();
     }
 
     /// <summary>
@@ -93,7 +104,8 @@ public static class EstiloUI
 
     private static void EstilizarMenu(Canvas canvas)
     {
-        CriarFundoMenu(canvas);
+        if (MenuDecorado)
+            CriarFundoMenu(canvas);
 
         GameObject painelMenu = Filho(canvas.transform, "PainelMenu");
         if (painelMenu != null)
@@ -210,18 +222,33 @@ public static class EstiloUI
                 titulo = filho.GetComponent<TextMeshProUGUI>();
         }
 
-        // No menu o cartão é só uma coluna invisível: o texto fica direto
-        // sobre as tábuas, como o HUD do jogo.
+        // Tela de início limpa: só o título e os botões. O resto do texto
+        // que vinha na cena fica escondido.
+        foreach (Transform filho in filhos)
+        {
+            TextMeshProUGUI texto = filho.GetComponent<TextMeshProUGUI>();
+            if (texto != null && texto != titulo)
+                texto.gameObject.SetActive(false);
+        }
+
+        // O cartão é só uma coluna invisível: sem fundo, sem moldura.
         RectTransform cartao = CriarCartao(
             painel.transform,
             "CartaoMenu",
-            new Vector2(720f, 920f),
-            new RectOffset(70, 70, 190, 30),
+            MenuDecorado ? new Vector2(720f, 920f) : new Vector2(540f, 690f),
+            MenuDecorado
+                ? new RectOffset(70, 70, 190, 30)
+                : new RectOffset(0, 0, 0, 0),
             22f,
             false
         );
 
-        CriarPedraMenu(cartao, 920f);
+        VerticalLayoutGroup coluna = cartao.GetComponent<VerticalLayoutGroup>();
+        if (coluna != null && !MenuDecorado)
+            coluna.childAlignment = TextAnchor.MiddleCenter;
+
+        if (MenuDecorado)
+            CriarPedraMenu(cartao, 920f);
 
         if (titulo != null)
         {
@@ -241,37 +268,40 @@ public static class EstiloUI
             TemaUI.AjustarLargura(titulo, 540f, 0f);
         }
 
-        TextMeshProUGUI subtitulo = UIUtil.CriarTexto(
-            cartao,
-            "__Subtitulo",
-            "PEDRA  ·  SORTE  ·  LUCRO",
-            22f,
-            new Vector2(540f, 26f),
-            Vector2.zero,
-            TextAlignmentOptions.Center
-        );
+        if (MenuDecorado)
+        {
+            TextMeshProUGUI subtitulo = UIUtil.CriarTexto(
+                cartao,
+                "__Subtitulo",
+                "PEDRA  ·  SORTE  ·  LUCRO",
+                22f,
+                new Vector2(540f, 26f),
+                Vector2.zero,
+                TextAlignmentOptions.Center
+            );
 
-        TemaUI.EstilizarTexto(
-            subtitulo,
-            22f,
-            TemaUI.Acento,
-            FontStyles.Normal,
-            TextAlignmentOptions.Center,
-            6f
-        );
+            TemaUI.EstilizarTexto(
+                subtitulo,
+                22f,
+                TemaUI.Acento,
+                FontStyles.Normal,
+                TextAlignmentOptions.Center,
+                6f
+            );
 
-        TemaUI.Sombra(subtitulo, 2f, 0.75f);
-        TemaUI.AjustarAltura(subtitulo, 26f);
-        TemaUI.AjustarLargura(subtitulo, 540f, 0f);
+            TemaUI.Sombra(subtitulo, 2f, 0.75f);
+            TemaUI.AjustarAltura(subtitulo, 26f);
+            TemaUI.AjustarLargura(subtitulo, 540f, 0f);
+        }
 
-        AdicionarBotaoMenu(cartao, filhos, "BotaoContinuar", "Continuar",
-            TemaUI.EstiloBotao.Primario, 84f);
         AdicionarBotaoMenu(cartao, filhos, "BotaoNovoJogo", "Novo jogo",
             TemaUI.EstiloBotao.Secundario, 84f);
+        AdicionarBotaoMenu(cartao, filhos, "BotaoContinuar", "Continuar",
+            TemaUI.EstiloBotao.Primario, 84f);
         AdicionarBotaoMenu(cartao, filhos, "BotaoConfiguracoes", "Configurações",
             TemaUI.EstiloBotao.Secundario, 84f);
         AdicionarBotaoMenu(cartao, filhos, "BotaoCreditos", "Créditos",
-            TemaUI.EstiloBotao.Fantasma, 84f);
+            TemaUI.EstiloBotao.Secundario, 84f);
         AdicionarBotaoMenu(cartao, filhos, "BotaoSair", "Sair",
             TemaUI.EstiloBotao.Perigo, 84f);
     }

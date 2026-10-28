@@ -51,6 +51,14 @@ public class GameManager : MonoBehaviour
         TutorialBootstrap.Instalar();
         LimiteMesa.Instalar();
         ConfigurarHUD();
+
+        // O "R$" é fixo, mas o sufixo (mil/mi ou K/M) muda com o idioma.
+        Traducao.OnIdiomaMudou += AtualizarHUD;
+    }
+
+    void OnDestroy()
+    {
+        Traducao.OnIdiomaMudou -= AtualizarHUD;
     }
 
     void Start()

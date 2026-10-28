@@ -67,12 +67,23 @@ public class ConfiguracoesManager : MonoBehaviour
         CarregarConfiguracoes();
         LigarControles();
         AtualizarRotulosVolume();
+
+        // O idioma pode ser trocado pelo dropdown; quem monta rótulos por
+        // código precisa saber para reescrevê-los em outro idioma.
+        Traducao.OnIdiomaMudou += AoMudarIdioma;
     }
 
     void OnDestroy()
     {
+        Traducao.OnIdiomaMudou -= AoMudarIdioma;
+
         if (Instance == this)
             Instance = null;
+    }
+
+    void AoMudarIdioma()
+    {
+        SincronizarControles();
     }
 
     void OnApplicationQuit()
@@ -281,15 +292,13 @@ public class ConfiguracoesManager : MonoBehaviour
 
     int IndiceIdiomaSalvo()
     {
-        return PlayerPrefs.GetString(ChaveIdioma, "pt-BR") == "en" ? 1 : 0;
+        return Traducao.Ingles ? 1 : 0;
     }
 
     public void MudarIdioma(int indice)
     {
-        string idioma = indice == 1 ? "en" : "pt-BR";
-
-        PlayerPrefs.SetString(ChaveIdioma, idioma);
-        PlayerPrefs.Save();
+        // Traduz na hora, salva em PlayerPrefs e repinta tudo que está aberto.
+        Traducao.DefinirIdioma(indice == 1 ? "en" : "pt-BR");
     }
 
     // --- Carregar, ligar e salvar ---------------------------------------
@@ -534,7 +543,7 @@ public class ConfiguracoesManager : MonoBehaviour
 
         int porcentagem = Mathf.RoundToInt(Mathf.Clamp01(valor) * 100f);
 
-        rotulo.text = nome + "  <color=#E8C979>" + porcentagem + "%</color>";
+        rotulo.text = Traducao.T(nome) + "  <color=#E8C979>" + porcentagem + "%</color>";
     }
 
     public void SalvarConfiguracoes()

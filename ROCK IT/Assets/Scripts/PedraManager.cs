@@ -88,6 +88,14 @@ public class PedraManager : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         PrepararColisor();
         AplicarOrdemDeDesenho();
+
+        // "Vida: 10" precisa mudar junto com o idioma, mesmo com a pedra parada.
+        Traducao.OnIdiomaMudou += AtualizarTextoVida;
+    }
+
+    void OnDestroy()
+    {
+        Traducao.OnIdiomaMudou -= AtualizarTextoVida;
     }
 
     /// <summary>
@@ -726,7 +734,7 @@ public class PedraManager : MonoBehaviour
     void AtualizarTextoVida()
     {
         if (vidaText != null)
-            vidaText.text = "Vida: " + vidaAtual;
+            vidaText.text = Traducao.TF("Vida: {0}", vidaAtual);
     }
 
     void PedraDestruida()

@@ -52,7 +52,7 @@ public class NoHabilidadeUI : MonoBehaviour,
     {
         if (dados == null) return;
 
-        textoNome.text = dados.nome;
+        textoNome.text = Traducao.T(dados.nome);
 
         bool desbloqueado = StatusManager.Instance.TemHabilidade(dados.id);
         bool disponivel = !desbloqueado && RequisitosAtendidos();

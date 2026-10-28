@@ -15,6 +15,29 @@ public class ItemStatusUI : MonoBehaviour
     {
         OrganizarLinha();
         AplicarEstilo();
+        AtualizarRotuloBotao();
+        Traducao.OnIdiomaMudou += AtualizarRotuloBotao;
+    }
+
+    void OnDestroy()
+    {
+        Traducao.OnIdiomaMudou -= AtualizarRotuloBotao;
+    }
+
+    /// <summary>
+    /// O texto "Melhorar" vem do prefab; traduz na hora porque o item nasce
+    /// depois que a cena já passou pelo tradutor.
+    /// </summary>
+    void AtualizarRotuloBotao()
+    {
+        if (botaoUpgrade == null)
+            return;
+
+        TextMeshProUGUI rotulo =
+            botaoUpgrade.GetComponentInChildren<TextMeshProUGUI>(true);
+
+        if (rotulo != null)
+            rotulo.text = Traducao.T("Melhorar");
     }
 
     void OrganizarLinha()
@@ -96,21 +119,27 @@ public class ItemStatusUI : MonoBehaviour
         switch (tipoStatus)
         {
             case 0:
-                textoNome.text = "Força";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelForca +
-                    "\nDano: " + NumeroUtil.Formatar(StatusManager.Instance.GetDanoForca(), 1);
+                textoNome.text = Traducao.T("Força");
+                textoNivel.text = Traducao.TF(
+                    "Nível {0}\nDano: {1}",
+                    StatusManager.Instance.nivelForca,
+                    NumeroUtil.Formatar(StatusManager.Instance.GetDanoForca(), 1));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelForca());
                 break;
             case 1:
-                textoNome.text = "Sorte";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelSorte +
-                    "\nChance máx.: +" + NumeroUtil.Formatar(StatusManager.Instance.GetDeslocamentoSorte(), 0) + "%";
+                textoNome.text = Traducao.T("Sorte");
+                textoNivel.text = Traducao.TF(
+                    "Nível {0}\nChance máx.: +{1}%",
+                    StatusManager.Instance.nivelSorte,
+                    NumeroUtil.Formatar(StatusManager.Instance.GetDeslocamentoSorte(), 0));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelSorte());
                 break;
             case 2:
-                textoNome.text = "Fortuna";
-                textoNivel.text = "Nível " + StatusManager.Instance.nivelFortuna +
-                    "\nMultiplicador: x" + NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortuna(), 1);
+                textoNome.text = Traducao.T("Fortuna");
+                textoNivel.text = Traducao.TF(
+                    "Nível {0}\nMultiplicador: x{1}",
+                    StatusManager.Instance.nivelFortuna,
+                    NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortuna(), 1));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelFortuna());
                 break;
         }

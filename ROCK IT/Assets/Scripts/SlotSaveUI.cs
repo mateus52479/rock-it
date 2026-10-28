@@ -127,7 +127,7 @@ public class SlotSaveUI : MonoBehaviour
         TemaUI.AplicarPlaca(linha, TemaUI.SpriteLinhaItem(), Color.white);
 
         TextMeshProUGUI tituloSlot = UIUtil.CriarTexto(
-            linha.transform, "TituloSlot", "Slot " + slot,
+            linha.transform, "TituloSlot", Traducao.TF("Slot {0}", slot),
             26f, new Vector2(240f, 38f), new Vector2(-330f, 28f),
             TextAlignmentOptions.Left);
 
@@ -137,9 +137,10 @@ public class SlotSaveUI : MonoBehaviour
 
         string textoResumo = resumo.existe
             ? NumeroUtil.FormatarDinheiro(resumo.dinheiro)
-              + "   ·   Força " + resumo.nivelForca
-              + "   ·   " + resumo.data.ToString("dd/MM/yyyy HH:mm")
-            : "Vazio";
+              + Traducao.TF("   ·   Força {0}   ·   {1}",
+                  resumo.nivelForca,
+                  resumo.data.ToString("dd/MM/yyyy HH:mm"))
+            : Traducao.T("Vazio");
 
         TextMeshProUGUI resumoTexto = UIUtil.CriarTexto(
             linha.transform, "Resumo", textoResumo,
@@ -188,8 +189,8 @@ public class SlotSaveUI : MonoBehaviour
         if (modo == Modo.NovoJogo && resumo.existe)
         {
             Confirmar(
-                "Sobrescrever o Slot " + slot + "?",
-                "O progresso salvo nele será perdido.",
+                Traducao.TF("Sobrescrever o Slot {0}?", slot),
+                Traducao.T("O progresso salvo nele será perdido."),
                 () => CarregarSlot(slot));
             return;
         }
@@ -218,8 +219,8 @@ public class SlotSaveUI : MonoBehaviour
     void ConfirmarApagar(int slot)
     {
         Confirmar(
-            "Apagar o Slot " + slot + "?",
-            "Não dá para desfazer.",
+            Traducao.TF("Apagar o Slot {0}?", slot),
+            Traducao.T("Não dá para desfazer."),
             () =>
             {
                 SaveManager.Instance.ApagarSlot(slot);

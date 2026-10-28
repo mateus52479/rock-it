@@ -203,12 +203,6 @@ public class StatusManager : MonoBehaviour
 /// </summary>
 public static class NumeroUtil
 {
-    private static readonly string[] sufixos =
-    {
-        "", " mil", " mi", " bi", " tri", " qua",
-        " qui", " sex", " sep", " oct", " non", " dec"
-    };
-
     public static string Formatar(float valor, int casasDecimais = 1)
     {
         if (float.IsNaN(valor))
@@ -228,13 +222,13 @@ public static class NumeroUtil
         if (ordem <= 0)
             return valor.ToString("F" + Mathf.Max(0, casasDecimais));
 
-        if (ordem >= sufixos.Length)
+        if (ordem >= Traducao.SufixosMilhar.Length)
             return valor.ToString("0.##E+0");
 
         float reduzido = valor / Mathf.Pow(1000f, ordem);
         int casas = Mathf.Abs(reduzido) >= 100f ? 0 : 1;
 
-        return reduzido.ToString("F" + casas) + sufixos[ordem];
+        return reduzido.ToString("F" + casas) + Traducao.SufixosMilhar[ordem];
     }
 
     /// <summary>
