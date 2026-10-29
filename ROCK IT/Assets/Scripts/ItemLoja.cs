@@ -94,8 +94,11 @@ public class ItemLoja : MonoBehaviour
         if (imagemPedra != null)
         {
             imagemPedra.rectTransform.SetParent(transform, false);
-            TemaUI.AjustarAltura(imagemPedra, 84f);
-            TemaUI.AjustarLargura(imagemPedra, 84f);
+
+            // 90 deixa o desenho inteiro visível e ainda mantém o tamanho
+            // próximo do que era antes do recorte ser corrigido.
+            TemaUI.AjustarAltura(imagemPedra, 90f);
+            TemaUI.AjustarLargura(imagemPedra, 90f);
             imagemPedra.preserveAspect = true;
         }
 

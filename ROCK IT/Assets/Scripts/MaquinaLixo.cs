@@ -16,6 +16,9 @@ public class MaquinaLixo : MonoBehaviour, IMaquinaRecebedora
     public Color corLixoNormal = Color.gray;
     public Color corLixoLuxo = Color.yellow;
 
+    [Tooltip("Tom dourado aplicado por cima do sprite do Lixo de Luxo.")]
+    public Color corDourado = TemaUI.Dourado;
+
     private const string CaminhoLataNormal = "Sprites/Maquinas/LATA DE LIXO";
     private const string CaminhoLataLuxo = "Sprites/Maquinas/LATA DE LIXO DE OURO";
 
@@ -86,7 +89,10 @@ public class MaquinaLixo : MonoBehaviour, IMaquinaRecebedora
         }
 
         spriteRenderer.sprite = alvo;
-        spriteRenderer.color = Color.white;
+
+        // O PNG do Lixo de Luxo é igual ao da lata normal; o dourado vem
+        // do tingimento para os dois se distinguirem no mapa.
+        spriteRenderer.color = luxo ? corDourado : Color.white;
 
         AjustarCollider(alvo);
     }

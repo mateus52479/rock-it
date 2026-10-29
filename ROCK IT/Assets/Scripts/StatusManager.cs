@@ -20,8 +20,9 @@ public class StatusManager : MonoBehaviour
 
     [Header("Curva de custo")]
     [Tooltip("Quanto o próximo nível custa em relação ao anterior. " +
-             "1.6 acompanha o ganho de dinheiro das pedras; 2.5 tornava o nível 20 inalcançável.")]
-    public float multiplicadorCusto = 1.6f;
+             "1.4 mantém os upgrades valendo a pena nos níveis altos; 1.6 " +
+             "ficava caro demais para o retorno das pedras.")]
+    public float multiplicadorCusto = 1.4f;
 
     [Tooltip("Teto do custo de um nível. Sem isso o valor estourava o limite de " +
              "número inteiro por volta do nível 39 e ficava negativo (upgrade de graça).")]
@@ -79,19 +80,19 @@ public class StatusManager : MonoBehaviour
         float custo = GetCustoProximoNivelForca();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelForca++;
+        AudioManager.Compra();
         return true;
     }
 
     // --- SORTE ---
     /// <summary>
-    /// Cada nível de Sorte move 1 ponto percentual de chance do pior resultado
-    /// da pedra para o prêmio máximo. É isso que permite virar o jogo.
+    /// Cada nível de Sorte move dois pontos percentuais dos piores resultados
+    /// (prejuízo primeiro, depois o zero) para o prêmio máximo. Com isso um
+    /// nível alto de Sorte chega a zerar a chance de perder dinheiro.
     /// </summary>
     public float GetDeslocamentoSorte()
     {
-        // O deslocamento nunca passa de 100 pontos: acima disso a chance já
-        // teria migrado toda a perda para o prêmio máximo.
-        return Mathf.Clamp(nivelSorte - 1, 0, 100);
+        return Mathf.Clamp((nivelSorte - 1) * 2f, 0f, 100f);
     }
 
     public float GetCustoProximoNivelSorte()
@@ -105,6 +106,7 @@ public class StatusManager : MonoBehaviour
         float custo = GetCustoProximoNivelSorte();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelSorte++;
+        AudioManager.Compra();
         return true;
     }
 
@@ -135,6 +137,7 @@ public class StatusManager : MonoBehaviour
         float custo = GetCustoProximoNivelFortuna();
         if (!GameManager.Instance.GastarDinheiro(custo)) return false;
         nivelFortuna++;
+        AudioManager.Compra();
         return true;
     }
 
@@ -176,6 +179,7 @@ public class StatusManager : MonoBehaviour
                 break;
         }
 
+        AudioManager.Compra();
         return true;
     }
 

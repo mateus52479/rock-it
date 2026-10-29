@@ -40,6 +40,10 @@ public static class TemaUI
     public static readonly Color Acento = new Color32(209, 205, 106, 255);
     public static readonly Color AcentoEscuro = new Color32(150, 147, 77, 255);
 
+    // Dourado do Lixo de Luxo. O PNG do upgrade é igual ao normal, então o
+    // tom vem do tingimento do sprite.
+    public static readonly Color Dourado = new Color32(255, 201, 92, 255);
+
     public static readonly Color Verde = new Color32(168, 208, 106, 255);
     public static readonly Color Vermelho = new Color32(226, 106, 96, 255);
     public static readonly Color Azul = new Color32(96, 146, 194, 255);
@@ -726,41 +730,11 @@ public static class TemaUI
         cores.fadeDuration = 0.04f;
         botao.colors = cores;
 
-        // Aro dourado por dentro, como o da lata: só nos botões principais.
-        bool comAro = estilo == EstiloBotao.Primario ||
-                      estilo == EstiloBotao.Verde;
-
+        // Botões sem aro dourado: fica só a placa, como os outros painéis.
         Transform aro = botao.transform.Find("__Aro");
 
-        if (comAro)
-        {
-            if (aro == null)
-            {
-                Image imagem = UIUtil.CriarImagem(
-                    botao.transform, "__Aro", Color.white,
-                    Vector2.zero, Vector2.zero);
-
-                RectTransform rt = imagem.rectTransform;
-                UIUtil.Esticar(rt);
-                rt.offsetMin = new Vector2(4f, 4f);
-                rt.offsetMax = new Vector2(-4f, -4f);
-
-                AplicarPlaca(imagem, SpriteAro(), Acento);
-                imagem.raycastTarget = false;
-
-                LayoutElement elemento = imagem.gameObject.AddComponent<LayoutElement>();
-                elemento.ignoreLayout = true;
-
-                aro = imagem.transform;
-            }
-
-            aro.gameObject.SetActive(true);
-            aro.SetAsLastSibling();
-        }
-        else if (aro != null)
-        {
+        if (aro != null)
             aro.gameObject.SetActive(false);
-        }
 
         TextMeshProUGUI rotulo = botao.GetComponentInChildren<TextMeshProUGUI>(true);
         if (rotulo != null)

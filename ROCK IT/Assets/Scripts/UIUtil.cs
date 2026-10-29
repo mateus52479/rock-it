@@ -31,6 +31,28 @@ public static class UIUtil
         return go;
     }
 
+    /// <summary>
+    /// Deixa um Canvas da cena com a mesma escala dos canvases criados em
+    /// runtime. Sem isso ele fica em "Constant Pixel Size": os elementos
+    /// ancorados no centro andam conforme a resolução e a UI não acompanha
+    /// a tela no fullscreen.
+    /// </summary>
+    public static void PadronizarEscala(Canvas canvas)
+    {
+        if (canvas == null)
+            return;
+
+        CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+
+        if (scaler == null)
+            scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+    }
+
     public static void GarantirEventSystem()
     {
         if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() != null)

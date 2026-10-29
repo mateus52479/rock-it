@@ -75,6 +75,7 @@ public class MaquinaManager : MonoBehaviour
 
         maquinasCompradas.Add(dados.id);
         AtivarMaquina(dados.id);
+        AudioManager.Compra();
         return true;
     }
 

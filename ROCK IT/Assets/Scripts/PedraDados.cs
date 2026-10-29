@@ -62,37 +62,59 @@ public class PedraDados
     }
 
     /// <summary>
-    /// Chances com o deslocamento de Sorte já aplicado: a chance sai do pior
-    /// resultado (a maior perda) e vai para o prêmio máximo. A regra antiga
-    /// mexia no resultado neutro e deixava a perda grande intacta, então
-    /// Sorte nunca conseguia virar o jogo.
+    /// Chances com o deslocamento de Sorte já aplicado. Cada nível tira dois
+    /// pontos percentuais dos piores resultados (prejuízo primeiro, depois o
+    /// zero) e joga tudo no prêmio máximo. Assim, Sorte alta realmente tira o
+    /// prejuízo do caminho, em vez de só melhorar um pouco a pior chance.
     /// </summary>
     public float[] ObterChancesAjustadas(int nivelSorte)
     {
         int total = tabelaValores.Length;
         float[] chances = new float[total];
-        float ajuste = Mathf.Max(0, nivelSorte - 1);
 
         for (int i = 0; i < total; i++)
             chances[i] = tabelaValores[i].chance;
 
-        int indicePior = 0;
         int indiceMelhor = 0;
 
         for (int i = 1; i < total; i++)
-        {
-            if (tabelaValores[i].valor < tabelaValores[indicePior].valor)
-                indicePior = i;
-
             if (tabelaValores[i].valor > tabelaValores[indiceMelhor].valor)
                 indiceMelhor = i;
-        }
 
-        if (indicePior != indiceMelhor)
+        // Nunca dá para tirar mais chance do que existe fora do prêmio máximo.
+        float disponivel = 0f;
+
+        for (int i = 0; i < total; i++)
+            if (i != indiceMelhor)
+                disponivel += chances[i];
+
+        float ajuste = Mathf.Min(
+            Mathf.Max(0, (nivelSorte - 1) * 2f),
+            disponivel
+        );
+
+        // Drena do pior para o melhor: primeiro o prejuízo grande, depois o
+        // zero e, por fim, os prêmios menores.
+        while (ajuste > 0f)
         {
-            float ajusteReal = Mathf.Min(ajuste, chances[indicePior]);
-            chances[indicePior] -= ajusteReal;
-            chances[indiceMelhor] += ajusteReal;
+            int indice = -1;
+
+            for (int i = 0; i < total; i++)
+            {
+                if (i == indiceMelhor || chances[i] <= 0f)
+                    continue;
+
+                if (indice < 0 || tabelaValores[i].valor < tabelaValores[indice].valor)
+                    indice = i;
+            }
+
+            if (indice < 0)
+                break;
+
+            float tirada = Mathf.Min(ajuste, chances[indice]);
+            chances[indice] -= tirada;
+            chances[indiceMelhor] += tirada;
+            ajuste -= tirada;
         }
 
         return chances;
@@ -134,6 +156,23 @@ public static class SpriteUtil
 {
     private static readonly Dictionary<Sprite, Bounds> cacheBounds = new Dictionary<Sprite, Bounds>();
     private static readonly Dictionary<Sprite, Sprite> cacheRecorte = new Dictionary<Sprite, Sprite>();
+
+    /// <summary>
+    /// Carrega um sprite de Resources. Muitos PNGs estão no modo "Multiple"
+    /// (sprite sheet), então o Load simples pode não devolver nada; nesse caso
+    /// pega o primeiro recorte.
+    /// </summary>
+    public static Sprite CarregarDeResources(string caminho)
+    {
+        Sprite sprite = Resources.Load<Sprite>(caminho);
+
+        if (sprite != null)
+            return sprite;
+
+        Sprite[] recortes = Resources.LoadAll<Sprite>(caminho);
+
+        return recortes != null && recortes.Length > 0 ? recortes[0] : null;
+    }
 
     /// <summary>
     /// Retorna o retângulo que o desenho realmente ocupa, em unidades locais do sprite.
@@ -205,28 +244,21 @@ public static class SpriteUtil
         if (cacheRecorte.TryGetValue(sprite, out Sprite emCache))
             return emCache;
 
-        Rect areaTextura = sprite.textureRect;
-        float pixelsPorUnidade = sprite.pixelsPerUnit;
+        // Com Mesh Type: Tight, o próprio importador já grava em textureRect o
+        // retângulo justo do desenho. Somar o pivô de novo deslocava o recorte
+        // e cortava a pedra pela metade na loja.
+        Rect area = sprite.textureRect;
 
-        if (areaTextura.width <= 0f || areaTextura.height <= 0f || pixelsPorUnidade <= 0f)
+        if (area.width <= 0f || area.height <= 0f)
             return sprite;
-
-        Bounds visivel = ObterBoundsVisiveis(sprite);
-
-        // Origem do pivô em pixels, dentro da textura.
-        float origemX = areaTextura.x + sprite.pivot.x;
-        float origemY = areaTextura.y + sprite.pivot.y;
-
-        float x = Mathf.Clamp(origemX + visivel.min.x * pixelsPorUnidade, areaTextura.x, areaTextura.xMax);
-        float y = Mathf.Clamp(origemY + visivel.min.y * pixelsPorUnidade, areaTextura.y, areaTextura.yMax);
-        float largura = Mathf.Clamp(visivel.size.x * pixelsPorUnidade, 1f, areaTextura.xMax - x);
-        float altura = Mathf.Clamp(visivel.size.y * pixelsPorUnidade, 1f, areaTextura.yMax - y);
 
         Sprite recortado = Sprite.Create(
             sprite.texture,
-            new Rect(x, y, largura, altura),
+            area,
             new Vector2(0.5f, 0.5f),
-            pixelsPorUnidade
+            sprite.pixelsPerUnit,
+            0,
+            SpriteMeshType.FullRect
         );
 
         recortado.name = sprite.name + " (recorte)";

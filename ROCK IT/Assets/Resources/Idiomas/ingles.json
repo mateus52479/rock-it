@@ -144,6 +144,9 @@
     { "pt": "Na aba Status você sobe Força (dano), Sorte (chance do prêmio alto) e Fortuna (multiplica o lucro).", "en": "In the Status tab you raise Strength (damage), Luck (chance of the top prize) and Fortune (multiplies profit)." },
     { "pt": "Nas Habilidades você compra bônus permanentes. Custam caro, mas mudam o jogo de verdade.", "en": "In Skills you buy permanent bonuses. They are expensive, but they really change the game." },
     { "pt": "E nas Máquinas você automatiza a mina: lixo, scanner, quebrador e o inversor de polaridade.", "en": "And in Machines you automate the mine: trash, scanner, breaker and the polarity inverter." },
-    { "pt": "É isso! Vai juntando dinheiro até chegar no seu 1 BILHÃO. Boa sorte!", "en": "That's it! Keep stacking money until you hit your 1 BILLION. Good luck!" }
+    { "pt": "É isso! Vai juntando dinheiro até chegar no seu 1 BILHÃO. Boa sorte!", "en": "That's it! Keep stacking money until you hit your 1 BILLION. Good luck!" },
+    { "pt": "PRÊMIOS", "en": "PRIZES" },
+    { "pt": "CHANCE", "en": "CHANCE" },
+    { "pt": "VALOR", "en": "VALUE" }
   ]
 }

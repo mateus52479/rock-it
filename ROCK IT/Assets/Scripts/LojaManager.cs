@@ -189,6 +189,8 @@ public class LojaManager : MonoBehaviour
         if (primeiraComum)
             SaveManager.Instance.MarcarPrimeiraComum();
 
+        AudioManager.Compra();
+
         if (!gratisForcado)
             FecharLoja();
 

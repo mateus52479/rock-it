@@ -110,11 +110,11 @@ O jogador entra em uma mina onde um minerador vende pedras embaladas. Dentro del
 
 | Status | Efeito | Custo base |
 |--------|--------|------------|
-| Força | Mais dano por clique (+0.5 por nível) | R$ 50 |
-| Sorte | Maior recompensa (+10% por nível) | R$ 50 |
-| Fortuna | Multiplicador de dinheiro (+0.1 por nível) | R$ 100 |
+| Força | Mais dano por clique | R$ 50 |
+| Sorte | Tira 2 pontos percentuais dos piores resultados e joga no prêmio máximo | R$ 50 |
+| Fortuna | Multiplicador de dinheiro | R$ 100 |
 
-O custo aumenta em **2.5x** a cada nível.
+O custo aumenta em **1.4x** a cada nível.
 
 ---
 

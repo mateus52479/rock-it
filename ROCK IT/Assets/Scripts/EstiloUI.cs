@@ -38,6 +38,10 @@ public static class EstiloUI
         if (canvas == null)
             return;
 
+        // A cena vinha em "Constant Pixel Size", então a UI não acompanhava a
+        // resolução: no fullscreen o dinheiro escorregava para o meio da tela.
+        UIUtil.PadronizarEscala(canvas);
+
         string cena = SceneManager.GetActiveScene().name;
 
         if (cena == "MenuPrincipal")

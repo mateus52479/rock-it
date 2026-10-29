@@ -164,7 +164,7 @@ public class ArvoreHabilidadesUI : MonoBehaviour, IPointerEnterHandler, IPointer
         textoTooltipDescricao.text = Traducao.T(dados.descricao);
 
         bool desbloqueado = StatusManager.Instance.TemHabilidade(dados.id);
-        textoTooltipCusto.text = desbloqueado ? Traducao.T("✓ Comprado") : "R$ " + dados.custo;
+        textoTooltipCusto.text = desbloqueado ? Traducao.T("Comprado") : "R$ " + dados.custo;
 
         RectTransform tooltipRT = painelTooltip.GetComponent<RectTransform>();
         tooltipRT.position = posicaoMouse + new Vector2(10, 10);

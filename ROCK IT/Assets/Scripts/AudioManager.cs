@@ -30,6 +30,15 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Clique do mouse. Se ficar vazio, carrega Resources/Musicas/MouseClick.")]
     public AudioClip clipeMouseClick;
 
+    [Tooltip("Som do prêmio máximo. Se ficar vazio, carrega Resources/Musicas/jackpoooooot.")]
+    public AudioClip clipeJackpot;
+
+    [Tooltip("Som de compra na loja. Se ficar vazio, carrega Resources/Musicas/KATCHIIMMM.")]
+    public AudioClip clipeCompra;
+
+    [Tooltip("Som do dinheiro subindo/descendo. Se ficar vazio, carrega Resources/Musicas/ModificandoMoney.")]
+    public AudioClip clipeModificandoMoney;
+
     [Header("Volumes (0 a 1)")]
     [Range(0f, 1f)] public float volumeMusica = 0.6f;
     [Range(0f, 1f)] public float volumeEfeitos = 0.9f;
@@ -163,6 +172,15 @@ public class AudioManager : MonoBehaviour
 
         if (clipeMouseClick == null)
             clipeMouseClick = Resources.Load<AudioClip>(PastaClipes + "MouseClick");
+
+        if (clipeJackpot == null)
+            clipeJackpot = Resources.Load<AudioClip>(PastaClipes + "jackpoooooot");
+
+        if (clipeCompra == null)
+            clipeCompra = Resources.Load<AudioClip>(PastaClipes + "KATCHIIMMM");
+
+        if (clipeModificandoMoney == null)
+            clipeModificandoMoney = Resources.Load<AudioClip>(PastaClipes + "ModificandoMoney");
     }
 
     void AoCarregarCena(Scene cena, LoadSceneMode modo)
@@ -209,6 +227,23 @@ public class AudioManager : MonoBehaviour
         TocarEfeito(clipeMouseClick, volumeDoClique);
     }
 
+    public void TocarJackpot()
+    {
+        TocarEfeito(clipeJackpot, 1f);
+    }
+
+    public void TocarCompra()
+    {
+        TocarEfeito(clipeCompra, 0.9f);
+    }
+
+    public void TocarModificandoMoney()
+    {
+        // Toca mais baixo que os outros efeitos: o contador pode mudar várias
+        // vezes seguidas e não deve abafar o resto.
+        TocarEfeito(clipeModificandoMoney, 0.7f);
+    }
+
     void TocarEfeito(AudioClip clipe, float volume)
     {
         if (clipe == null || fonteEfeitos == null)
@@ -242,6 +277,27 @@ public class AudioManager : MonoBehaviour
     {
         if (Instance != null)
             Instance.TocarPedraCaiu();
+    }
+
+    /// <summary>Fanfarra do prêmio máximo de uma pedra.</summary>
+    public static void Jackpot()
+    {
+        if (Instance != null)
+            Instance.TocarJackpot();
+    }
+
+    /// <summary>Confirmação de compra na loja (pedra, status, habilidade ou máquina).</summary>
+    public static void Compra()
+    {
+        if (Instance != null)
+            Instance.TocarCompra();
+    }
+
+    /// <summary>Contador de dinheiro animando para cima ou para baixo.</summary>
+    public static void ModificandoMoney()
+    {
+        if (Instance != null)
+            Instance.TocarModificandoMoney();
     }
 
     /// <summary>Liga/desliga o arrasto conforme a pedra está se movendo.</summary>

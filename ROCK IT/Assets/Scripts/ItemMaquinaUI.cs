@@ -128,14 +128,21 @@ public class ItemMaquinaUI : MonoBehaviour
             Sprite icone = null;
 
             if (maquina.id == "lixo")
-                icone = Resources.Load<Sprite>("Sprites/Maquinas/LATA DE LIXO");
+                icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/LATA DE LIXO");
             else if (maquina.id == "lixo_luxo")
-                icone = Resources.Load<Sprite>("Sprites/Maquinas/LATA DE LIXO DE OURO");
+                icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/LATA DE LIXO DE OURO");
+            else if (maquina.id == "scanner")
+                icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/Scanner");
 
             if (icone != null)
             {
                 imagemMaquina.sprite = icone;
-                imagemMaquina.color = Color.white;
+
+                // O PNG do lixo de ouro é igual ao normal; o dourado vem do
+                // tingimento para a linha do upgrade não parecer a mesma.
+                imagemMaquina.color = maquina.id == "lixo_luxo"
+                    ? TemaUI.Dourado
+                    : Color.white;
             }
             else
             {
@@ -198,14 +205,14 @@ public class ItemMaquinaUI : MonoBehaviour
             }
 
             textoBotao.text = Traducao.T("Comprado");
-            textoPreco.text = "✓";
+            textoPreco.text = Traducao.T("Comprado");
             textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }
         else if (comprada || temUpgrade)
         {
             textoBotao.text = Traducao.T("Comprado");
-            textoPreco.text = "✓";
+            textoPreco.text = Traducao.T("Comprado");
             textoPreco.color = TemaUI.Acento;
             botaoAcao.interactable = false;
         }

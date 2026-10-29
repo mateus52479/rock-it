@@ -3864,7 +3864,7 @@ MonoBehaviour:
   nivelForca: 1
   nivelSorte: 1
   nivelFortuna: 1
-  multiplicadorCusto: 1.6
+  multiplicadorCusto: 1.4
   custoMaximo: 1e+30
   danoBase: 1
   fatorDanoPorNivel: 1.75

@@ -99,7 +99,12 @@ public class GameManager : MonoBehaviour
             RectTransform rtContainer = container as RectTransform;
             if (rtContainer != null)
             {
-                rtContainer.anchoredPosition = new Vector2(0f, rtContainer.anchoredPosition.y);
+                // Fica no topo, centralizado. Antes era "centro do canvas +
+                // 200", então no fullscreen o texto escorregava para o meio.
+                rtContainer.anchorMin = new Vector2(0.5f, 1f);
+                rtContainer.anchorMax = new Vector2(0.5f, 1f);
+                rtContainer.pivot = new Vector2(0.5f, 1f);
+                rtContainer.anchoredPosition = new Vector2(0f, -52f);
                 rtContainer.sizeDelta = new Vector2(640f, 96f);
             }
         }
@@ -179,6 +184,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 duracaoAnimacao = CalcularDuracao(distancia);
+                AudioManager.ModificandoMoney();
             }
         }
 

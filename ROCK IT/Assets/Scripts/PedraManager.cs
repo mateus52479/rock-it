@@ -82,6 +82,31 @@ public class PedraManager : MonoBehaviour
     /// </summary>
     private int resultadoSorteado = 0;
 
+    /// <summary>Diz se a última recompensa calculada foi o prêmio máximo.</summary>
+    private bool ultimoResultadoFoiJackpot = false;
+
+    /// <summary>Tabela de valores da pedra, usada pela TabelaPremiosUI.</summary>
+    public PedraDados DadosDaPedra
+    {
+        get { return dados; }
+    }
+
+    /// <summary>
+    /// Metade da largura que a pedra ocupa na tela depois de ampliada. A
+    /// tabela de prêmios usa isso para encostar do lado direito sem cobri-la.
+    /// </summary>
+    public float MetadeLarguraAmpliada()
+    {
+        if (colisor == null)
+            PrepararColisor();
+
+        float larguraBase = colisor != null
+            ? colisor.size.x * escalaBase.x
+            : larguraMundoAlvo;
+
+        return larguraBase * escalaAumentada * 0.5f;
+    }
+
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -96,6 +121,7 @@ public class PedraManager : MonoBehaviour
     void OnDestroy()
     {
         Traducao.OnIdiomaMudou -= AtualizarTextoVida;
+        TabelaPremiosUI.Esconder(this);
     }
 
     /// <summary>
@@ -462,10 +488,20 @@ public class PedraManager : MonoBehaviour
         if (segurando)
         {
             segurando = false;
+
             if (!estaAtiva)
+            {
                 CentralizarEAumentar();
-            else if (!tremendo)
-                StartCoroutine(AplicarDano());
+            }
+            else
+            {
+                // A tabela acompanha a pedra que está sendo batida, mesmo se
+                // outra foi ampliada antes.
+                TabelaPremiosUI.Mostrar(this);
+
+                if (!tremendo)
+                    StartCoroutine(AplicarDano());
+            }
         }
     }
 
@@ -489,6 +525,7 @@ public class PedraManager : MonoBehaviour
             {
                 estaAtiva = false;
                 transform.localScale = escalaBase;
+                TabelaPremiosUI.Esconder(this);
             }
 
             if (rb != null)
@@ -556,6 +593,7 @@ public class PedraManager : MonoBehaviour
     void CentralizarEAumentar()
     {
         estaAtiva = true;
+        TabelaPremiosUI.Mostrar(this);
         StartCoroutine(ViajarAoCentro());
     }
 
@@ -740,8 +778,13 @@ public class PedraManager : MonoBehaviour
     void PedraDestruida()
     {
         float recompensaFinal = CalcularRecompensa();
+        bool ganhouJackpot = ultimoResultadoFoiJackpot;
 
         GameManager.Instance.AdicionarDinheiro(recompensaFinal);
+
+        if (ganhouJackpot)
+            AudioManager.Jackpot();
+
         Debug.Log("Recompensa: R$ " + recompensaFinal.ToString("F2"));
 
         if (OnPedraDestruida != null)
@@ -752,12 +795,18 @@ public class PedraManager : MonoBehaviour
 
     float CalcularRecompensa()
     {
+        ultimoResultadoFoiJackpot = false;
+
         int maiorValor = MaiorValorDaTabela();
 
         if (garantirMaximo)
+        {
+            ultimoResultadoFoiJackpot = maiorValor > 0 && !valorInvertido;
+
             return valorInvertido
                 ? -maiorValor + dados.precoCompra
                 : maiorValor;
+        }
 
         // Usa o resultado sorteado quando a pedra apareceu. É o mesmo que o
         // Scanner mostrou, então a borda nunca contradiz a recompensa.
@@ -773,6 +822,10 @@ public class PedraManager : MonoBehaviour
         if (StatusManager.Instance.TemHabilidade("analista_profissional"))
             if (Random.value < 0.1f)
                 recompensaBase = maiorValor;
+
+        // Prêmio máximo da tabela (o Inversor fica de fora: ali o valor máximo
+        // vira o maior prejuízo).
+        ultimoResultadoFoiJackpot = maiorValor > 0 && recompensaBase >= maiorValor;
 
         float recompensa = recompensaBase;
 
