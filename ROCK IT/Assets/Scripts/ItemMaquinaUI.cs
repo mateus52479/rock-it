@@ -12,6 +12,7 @@ public class ItemMaquinaUI : MonoBehaviour
     public TextMeshProUGUI textoBotao;
 
     private MaquinaDados dados;
+    private MaquinaDados exibido;
 
     void Awake()
     {
@@ -30,11 +31,8 @@ public class ItemMaquinaUI : MonoBehaviour
         if (dados == null)
             return;
 
-        if (textoNome != null)
-            textoNome.text = Traducao.T(dados.nome);
-
-        if (textoDescricao != null)
-            textoDescricao.text = Traducao.T(dados.descricao);
+        // Força Exibir a reescrever os textos no idioma novo.
+        exibido = null;
 
         AtualizarEstado();
     }
@@ -123,6 +121,25 @@ public class ItemMaquinaUI : MonoBehaviour
     {
         dados = maquina;
 
+        Exibir(maquina);
+
+        if (botaoAcao != null)
+            botaoAcao.onClick.AddListener(AcaoBotao);
+
+        AtualizarEstado();
+    }
+
+    /// <summary>
+    /// Mostra na linha os dados de uma máquina. A linha do lixo, por exemplo,
+    /// passa a exibir o Lixo de Luxo assim que o upgrade fica disponível.
+    /// </summary>
+    void Exibir(MaquinaDados maquina)
+    {
+        if (maquina == null || maquina == exibido)
+            return;
+
+        exibido = maquina;
+
         if (imagemMaquina != null)
         {
             Sprite icone = null;
@@ -138,11 +155,8 @@ public class ItemMaquinaUI : MonoBehaviour
             {
                 imagemMaquina.sprite = icone;
 
-                // O PNG do lixo de ouro é igual ao normal; o dourado vem do
-                // tingimento para a linha do upgrade não parecer a mesma.
-                imagemMaquina.color = maquina.id == "lixo_luxo"
-                    ? TemaUI.Dourado
-                    : Color.white;
+                // O PNG do ouro já vem dourado; tingir por cima só escureceria.
+                imagemMaquina.color = Color.white;
             }
             else
             {
@@ -158,11 +172,14 @@ public class ItemMaquinaUI : MonoBehaviour
 
         if (textoDescricao != null)
             textoDescricao.text = Traducao.T(maquina.descricao);
+    }
 
-        if (botaoAcao != null)
-            botaoAcao.onClick.AddListener(AcaoBotao);
+    MaquinaDados BuscarUpgrade()
+    {
+        if (dados == null || string.IsNullOrEmpty(dados.idUpgrade))
+            return null;
 
-        AtualizarEstado();
+        return MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
     }
 
     void AtualizarEstado()
@@ -172,6 +189,7 @@ public class ItemMaquinaUI : MonoBehaviour
         // Máquina ainda não implementada: aparece na loja, mas não dá para comprar.
         if (!dados.disponivel)
         {
+            Exibir(dados);
             textoBotao.text = Traducao.T("Em breve");
             textoPreco.text = "—";
             textoPreco.color = TemaUI.TextoFraco;
@@ -179,38 +197,30 @@ public class ItemMaquinaUI : MonoBehaviour
             return;
         }
 
+        MaquinaDados upgrade = BuscarUpgrade();
         bool comprada = MaquinaManager.Instance.TemMaquina(dados.id);
 
         // Se o upgrade desta máquina já foi comprado, ela conta como
         // evoluída: não pode voltar a oferecer "Comprar" e rebaixar.
-        bool temUpgrade = !string.IsNullOrEmpty(dados.idUpgrade) &&
-                          MaquinaManager.Instance.TemMaquina(dados.idUpgrade);
+        bool temUpgrade = upgrade != null && MaquinaManager.Instance.TemMaquina(upgrade.id);
 
-        if (comprada && !temUpgrade)
+        if (comprada && !temUpgrade && upgrade != null && upgrade.disponivel)
         {
-            // Verifica se tem upgrade disponível
-            if (!string.IsNullOrEmpty(dados.idUpgrade))
-            {
-                MaquinaDados upgrade = MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
-                if (upgrade != null && upgrade.disponivel)
-                {
-                    textoBotao.text = Traducao.T("Evoluir");
-                    textoPreco.text = "R$ " + upgrade.preco;
-                    textoPreco.color = GameManager.Instance.dinheiro >= upgrade.preco
-                        ? TemaUI.Acento
-                        : TemaUI.Vermelho;
-                    botaoAcao.interactable = true;
-                    return;
-                }
-            }
-
-            textoBotao.text = Traducao.T("Comprado");
-            textoPreco.text = Traducao.T("Comprado");
-            textoPreco.color = TemaUI.Acento;
-            botaoAcao.interactable = false;
+            // A próxima compra é o upgrade: a linha inteira passa a mostrar
+            // o Lixo de Luxo (ícone dourado, nome e descrição novos).
+            Exibir(upgrade);
+            textoBotao.text = Traducao.T("Evoluir");
+            textoPreco.text = "R$ " + upgrade.preco;
+            textoPreco.color = GameManager.Instance.dinheiro >= upgrade.preco
+                ? TemaUI.Acento
+                : TemaUI.Vermelho;
+            botaoAcao.interactable = true;
+            return;
         }
-        else if (comprada || temUpgrade)
+
+        if (comprada || temUpgrade)
         {
+            Exibir(temUpgrade ? upgrade : dados);
             textoBotao.text = Traducao.T("Comprado");
             textoPreco.text = Traducao.T("Comprado");
             textoPreco.color = TemaUI.Acento;
@@ -218,6 +228,7 @@ public class ItemMaquinaUI : MonoBehaviour
         }
         else
         {
+            Exibir(dados);
             textoBotao.text = Traducao.T("Comprar");
             textoPreco.text = "R$ " + dados.preco;
             textoPreco.color = GameManager.Instance.dinheiro >= dados.preco
@@ -229,23 +240,17 @@ public class ItemMaquinaUI : MonoBehaviour
 
     void AcaoBotao()
     {
-        bool comprada = MaquinaManager.Instance.TemMaquina(dados.id);
+        MaquinaDados upgrade = BuscarUpgrade();
 
-        bool temUpgrade = !string.IsNullOrEmpty(dados.idUpgrade) &&
-                          MaquinaManager.Instance.TemMaquina(dados.idUpgrade);
-
-        if (temUpgrade)
+        // O upgrade já foi comprado: a linha está "Comprado", sem ação.
+        if (upgrade != null && MaquinaManager.Instance.TemMaquina(upgrade.id))
             return;
 
-        if (comprada && !string.IsNullOrEmpty(dados.idUpgrade))
-        {
-            MaquinaDados upgrade = MaquinaDatabase.Instance.BuscarPorId(dados.idUpgrade);
-            if (upgrade != null && upgrade.disponivel)
-                MaquinaManager.Instance.ComprarMaquina(upgrade);
-        }
+        bool comprada = MaquinaManager.Instance.TemMaquina(dados.id);
+
+        if (comprada && upgrade != null && upgrade.disponivel)
+            MaquinaManager.Instance.ComprarMaquina(upgrade);
         else
-        {
             MaquinaManager.Instance.ComprarMaquina(dados);
-        }
     }
 }

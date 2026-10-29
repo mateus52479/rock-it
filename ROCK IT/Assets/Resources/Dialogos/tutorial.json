@@ -3,7 +3,7 @@
   "passos": [
     {
       "id": "boas_vindas",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "E aí! Primeira vez na mina? Quer que eu te explique como ganhar dinheiro aqui?",
       "npcX": -700,
       "npcY": -320,
@@ -13,7 +13,7 @@
     },
     {
       "id": "abrir_loja",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Boa! Aquele computador ali no canto é a loja. Clica nele para comprar sua primeira pedra.",
       "npcX": 700,
       "npcY": 100,
@@ -22,7 +22,7 @@
     },
     {
       "id": "aba_pedras",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Essa é a aba de pedras. Cada uma tem um preço e um risco diferente. As mais caras podem pagar muito mais.",
       "npcX": 600,
       "npcY": -380,
@@ -32,7 +32,7 @@
     },
     {
       "id": "comprar_pedra",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "A primeira Pedra Comum é grátis e ainda vem com o prêmio máximo. Compra ela para começar.",
       "npcX": 600,
       "npcY": -380,
@@ -41,7 +41,7 @@
     },
     {
       "id": "quebrar_pedra",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Agora clica na pedra até quebrar. Cada clique dá dano; quanto maior a sua Força, menos cliques você precisa.",
       "npcX": -750,
       "npcY": 300,
@@ -50,7 +50,7 @@
     },
     {
       "id": "recompensa",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Pronto! Ao quebrar, a pedra paga o valor sorteado. Mas cuidado: às vezes ela vale menos do que você pagou.",
       "npcX": -750,
       "npcY": 300,
@@ -59,7 +59,7 @@
     },
     {
       "id": "tour_status",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Na aba Status você sobe Força (dano), Sorte (chance do prêmio alto) e Fortuna (multiplica o lucro).",
       "npcX": 600,
       "npcY": -380,
@@ -70,7 +70,7 @@
     },
     {
       "id": "tour_habilidades",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "Nas Habilidades você compra bônus permanentes. Custam caro, mas mudam o jogo de verdade.",
       "npcX": 600,
       "npcY": -380,
@@ -80,7 +80,7 @@
     },
     {
       "id": "tour_maquinas",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "E nas Máquinas você automatiza a mina: lixo, scanner, quebrador e o inversor de polaridade.",
       "npcX": 600,
       "npcY": -380,
@@ -90,7 +90,7 @@
     },
     {
       "id": "fim",
-      "personagem": "Mineiro",
+      "personagem": "Pedrinha",
       "texto": "É isso! Vai juntando dinheiro até chegar no seu 1 BILHÃO. Boa sorte!",
       "npcX": 0,
       "npcY": -300,

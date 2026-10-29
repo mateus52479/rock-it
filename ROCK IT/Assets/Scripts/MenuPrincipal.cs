@@ -36,8 +36,7 @@ public class MenuPrincipal : MonoBehaviour
 
     public void AbrirCreditos()
     {
-        // Implementar depois
-        Debug.Log("Créditos");
+        CreditosUI.Abrir();
     }
 
     public void Sair()
