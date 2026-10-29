@@ -191,9 +191,9 @@ public class LojaManager : MonoBehaviour
 
         AudioManager.Compra();
 
-        if (!gratisForcado)
-            FecharLoja();
-
+        // A loja continua aberta depois da compra: o jogador pode comprar
+        // várias pedras seguidas sem precisar reabrir o painel. O tutorial
+        // fecha a loja no passo final dele, com "fecharLoja".
         if (OnPedraComprada != null)
             OnPedraComprada(pedra);
     }

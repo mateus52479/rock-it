@@ -45,6 +45,7 @@
       "texto": "Agora clica na pedra até quebrar. Cada clique dá dano; quanto maior a sua Força, menos cliques você precisa.",
       "npcX": -750,
       "npcY": 300,
+      "fecharLoja": true,
       "destacar": "pedra",
       "esperar": "quebrarPedra"
     },

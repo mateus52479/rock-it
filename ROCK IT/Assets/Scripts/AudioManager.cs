@@ -54,6 +54,10 @@ public class AudioManager : MonoBehaviour
     private AudioSource fonteArrasto;
     private AudioSource fonteEfeitos;
 
+    // O jackpot tem uma fonte própria para poder ser pausado junto com o jogo
+    // sem interromper os cliques dos menus.
+    private AudioSource fonteJackpot;
+
     /// <summary>Identificação da música que está tocando, para não reiniciar.</summary>
     private string musicaAtual = "";
 
@@ -90,6 +94,7 @@ public class AudioManager : MonoBehaviour
         fonteMusica = CriarFonte("Musica", volumeMusica, true);
         fonteArrasto = CriarFonte("ArrastandoPedra", volumeArrasto, true);
         fonteEfeitos = CriarFonte("Efeitos", volumeEfeitos, false);
+        fonteJackpot = CriarFonte("Jackpot", volumeEfeitos, false);
 
         SceneManager.sceneLoaded += AoCarregarCena;
     }
@@ -148,6 +153,7 @@ public class AudioManager : MonoBehaviour
         fonteMusica.outputAudioMixerGroup = Grupo(mixer, "Musica");
         fonteArrasto.outputAudioMixerGroup = Grupo(mixer, "Efeitos");
         fonteEfeitos.outputAudioMixerGroup = Grupo(mixer, "Efeitos");
+        fonteJackpot.outputAudioMixerGroup = Grupo(mixer, "Efeitos");
 
         mixerAplicado = true;
     }
@@ -201,6 +207,12 @@ public class AudioManager : MonoBehaviour
         // A tela de créditos é um overlay: trocar de cena sempre volta para a
         // música da cena nova.
         CreditosAbertos = false;
+
+        // Se o jogador sair no meio do jackpot, o som não pode continuar no
+        // menu (e a fonte não pode ficar pausada para sempre).
+        if (fonteJackpot != null)
+            fonteJackpot.Stop();
+
         TocarMusicaDaCena(cena.name);
     }
 
@@ -258,7 +270,26 @@ public class AudioManager : MonoBehaviour
 
     public void TocarJackpot()
     {
-        TocarEfeito(clipeJackpot, 1f);
+        if (clipeJackpot == null || fonteJackpot == null)
+            return;
+
+        // Fonte dedicada: o som pode ser pausado junto com a celebração sem
+        // parar os efeitos e cliques do resto do jogo.
+        fonteJackpot.Stop();
+        fonteJackpot.clip = clipeJackpot;
+        fonteJackpot.Play();
+    }
+
+    public void PausarSomJackpot()
+    {
+        if (fonteJackpot != null && fonteJackpot.isPlaying)
+            fonteJackpot.Pause();
+    }
+
+    public void RetomarSomJackpot()
+    {
+        if (fonteJackpot != null)
+            fonteJackpot.UnPause();
     }
 
     public void TocarCompra()
@@ -322,11 +353,37 @@ public class AudioManager : MonoBehaviour
             Instance.VoltarMusicaDaCena();
     }
 
+    /// <summary>Duração do som do jackpot, usada para sincronizar a celebração.</summary>
+    public static float DuracaoJackpot
+    {
+        get
+        {
+            if (Instance == null || Instance.clipeJackpot == null)
+                return 2.8f;
+
+            return Instance.clipeJackpot.length;
+        }
+    }
+
     /// <summary>Fanfarra do prêmio máximo de uma pedra.</summary>
     public static void Jackpot()
     {
         if (Instance != null)
             Instance.TocarJackpot();
+    }
+
+    /// <summary>Pausa o som do jackpot junto com o jogo.</summary>
+    public static void PausarJackpot()
+    {
+        if (Instance != null)
+            Instance.PausarSomJackpot();
+    }
+
+    /// <summary>Retoma o som do jackpot ao despausar.</summary>
+    public static void RetomarJackpot()
+    {
+        if (Instance != null)
+            Instance.RetomarSomJackpot();
     }
 
     /// <summary>Confirmação de compra na loja (pedra, status, habilidade ou máquina).</summary>

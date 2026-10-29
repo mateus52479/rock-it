@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -77,6 +78,16 @@ public class PedraManager : MonoBehaviour
     private bool garantirMaximo = false;
     private SpriteRenderer contornoScanner;
 
+    // Estado do modo de quebra: a pedra ampliada não pode ser arrastada nem
+    // empurrada pelas outras pedras enquanto está no centro da tela.
+    private bool viajandoParaFoco = false;
+    private bool viajandoDeVolta = false;
+    private Vector3 posicaoAntesDoFoco;
+    private bool rbEraKinematic;
+    private readonly List<Collider2D> colisoesIgnoradas = new List<Collider2D>();
+    private float proximaVerificacaoColisoes;
+    private bool sendoDestruida = false;
+
     /// <summary>
     /// Resultado sorteado quando a pedra aparece. Fica guardado para o Scanner
     /// poder dizer se o valor é positivo ou negativo sem "mentir" depois.
@@ -123,6 +134,7 @@ public class PedraManager : MonoBehaviour
     {
         Traducao.OnIdiomaMudou -= AtualizarTextoVida;
         TabelaPremiosUI.Esconder(this);
+        PedraFocoUI.Esconder(this);
     }
 
     /// <summary>
@@ -421,6 +433,11 @@ public class PedraManager : MonoBehaviour
     {
         if (interacaoBloqueada) return;
 
+        // Só uma pedra fica em foco por vez. Enquanto uma está ampliada, as
+        // outras continuam na mesa sem responder ao clique.
+        if (PedraFocoUI.PedraAtual != null && PedraFocoUI.PedraAtual != this)
+            return;
+
         // Cliques que começam na UI (configurações, pause, balão do tutorial)
         // não devem pegar a pedra que está atrás do painel.
         if (EventSystem.current != null &&
@@ -449,7 +466,7 @@ public class PedraManager : MonoBehaviour
     /// </summary>
     void SoltarPedra()
     {
-        if (arrastando)
+        if (arrastando && !estaAtiva)
         {
             AudioManager.Arrasto(false);
 
@@ -516,6 +533,19 @@ public class PedraManager : MonoBehaviour
     {
         AtualizarAnimacao();
 
+        // Se outra pedra nascer enquanto esta está em foco (por exemplo, uma
+        // compra feita com a loja aberta), ela também precisa ser ignorada.
+        if (estaAtiva)
+        {
+            proximaVerificacaoColisoes -= Time.deltaTime;
+
+            if (proximaVerificacaoColisoes <= 0f)
+            {
+                proximaVerificacaoColisoes = 0.5f;
+                IgnorarColisoesDeOutrasPedras();
+            }
+        }
+
         if ((segurando || arrastando) && Input.GetMouseButtonUp(0))
             SoltarPedra();
 
@@ -523,17 +553,13 @@ public class PedraManager : MonoBehaviour
 
         tempoSegurando += Time.deltaTime;
 
-        if (!arrastando && tempoSegurando >= tempoParaArrastar)
+        // No modo de quebra a pedra fica ampliada e não pode ser arrastada:
+        // clique e segure só continua valendo para bater na pedra.
+        if (!arrastando && !estaAtiva && !viajandoDeVolta &&
+            tempoSegurando >= tempoParaArrastar)
         {
             arrastando = true;
             tempoArrastoParado = 0f;
-
-            if (estaAtiva)
-            {
-                estaAtiva = false;
-                transform.localScale = escalaBase;
-                TabelaPremiosUI.Esconder(this);
-            }
 
             if (rb != null)
             {
@@ -543,7 +569,7 @@ public class PedraManager : MonoBehaviour
             }
         }
 
-        if (arrastando)
+        if (arrastando && !estaAtiva && !viajandoDeVolta)
         {
             Vector3 posicaoMouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             posicaoMouse.z = 0f;
@@ -599,8 +625,24 @@ public class PedraManager : MonoBehaviour
 
     void CentralizarEAumentar()
     {
+        if (estaAtiva || viajandoDeVolta)
+            return;
+
+        if (PedraFocoUI.PedraAtual != null && PedraFocoUI.PedraAtual != this)
+            return;
+
         estaAtiva = true;
+        viajandoParaFoco = true;
+        interacaoBloqueada = true;
+        posicaoAntesDoFoco = transform.position;
+
+        // A pedra é movida na mão até o centro. Sem isso, o Rigidbody2D
+        // continua empurrando e sendo empurrado pelas outras pedras no
+        // caminho, e a pedra fica tremendo/glitando.
+        GuardarFisicaEIgnorarOutrasPedras();
+
         TabelaPremiosUI.Mostrar(this);
+        PedraFocoUI.Mostrar(this);
         StartCoroutine(ViajarAoCentro());
     }
 
@@ -628,7 +670,10 @@ public class PedraManager : MonoBehaviour
         transform.position = destino;
         transform.localScale = escalaDestino;
 
-        StartCoroutine(Bounce());
+        yield return StartCoroutine(Bounce());
+
+        viajandoParaFoco = false;
+        interacaoBloqueada = false;
     }
 
     IEnumerator Bounce()
@@ -658,6 +703,138 @@ public class PedraManager : MonoBehaviour
         }
 
         transform.localScale = escalaAlvo;
+    }
+
+    /// <summary>
+    /// Prende o corpo da pedra em foco e ignora as colisões com as outras
+    /// pedras da mesa. A pedra é movida na mão para o centro; sem isso, ela
+    /// ainda participa da física e fica sendo empurrada/glitando no caminho.
+    /// </summary>
+    void GuardarFisicaEIgnorarOutrasPedras()
+    {
+        rbEraKinematic = rb != null && rb.isKinematic;
+
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        proximaVerificacaoColisoes = 0.5f;
+        IgnorarColisoesDeOutrasPedras();
+    }
+
+    void IgnorarColisoesDeOutrasPedras()
+    {
+        if (colisor == null)
+            return;
+
+        PedraManager[] pedras =
+            FindObjectsByType<PedraManager>(FindObjectsSortMode.None);
+
+        foreach (PedraManager outra in pedras)
+        {
+            if (outra == null || outra == this)
+                continue;
+
+            Collider2D outroColisor = outra.GetComponent<Collider2D>();
+
+            if (outroColisor == null || colisoesIgnoradas.Contains(outroColisor))
+                continue;
+
+            Physics2D.IgnoreCollision(colisor, outroColisor, true);
+            colisoesIgnoradas.Add(outroColisor);
+        }
+    }
+
+    void RestaurarFisica()
+    {
+        if (colisor != null)
+        {
+            foreach (Collider2D outro in colisoesIgnoradas)
+            {
+                if (outro != null)
+                    Physics2D.IgnoreCollision(colisor, outro, false);
+            }
+        }
+
+        colisoesIgnoradas.Clear();
+
+        if (rb != null)
+        {
+            rb.isKinematic = rbEraKinematic;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+    }
+
+    /// <summary>
+    /// Sai do modo de quebra pelo botão X: a pedra volta para a mesa, o fundo
+    /// clareia e ela volta a aceitar arrasto e colisões normais.
+    /// </summary>
+    public void SairDoFoco()
+    {
+        if (sendoDestruida || viajandoDeVolta)
+            return;
+
+        if (!estaAtiva && !viajandoParaFoco)
+            return;
+
+        // Se o último golpe já zerou a vida, o clique no X termina a quebra
+        // em vez de devolver uma pedra morta para a mesa.
+        if (vidaAtual <= 0)
+        {
+            PedraDestruida();
+            return;
+        }
+
+        StopAllCoroutines();
+
+        viajandoParaFoco = false;
+        estaAtiva = false;
+        tremendo = false;
+
+        TabelaPremiosUI.Esconder(this);
+        PedraFocoUI.Esconder(this);
+
+        StartCoroutine(VoltarDaFoco());
+    }
+
+    IEnumerator VoltarDaFoco()
+    {
+        viajandoDeVolta = true;
+        interacaoBloqueada = true;
+
+        Vector3 posInicial = transform.position;
+        Vector3 escalaInicial = transform.localScale;
+        Vector3 escalaDestino = escalaBase;
+
+        float tempo = 0f;
+        float duracao = 0.3f;
+
+        while (tempo < duracao)
+        {
+            tempo += Time.deltaTime;
+            float t = Mathf.Clamp01(tempo / duracao);
+            float tSmooth = 1f - Mathf.Pow(1f - t, 3f);
+
+            transform.position = Vector3.Lerp(posInicial, posicaoAntesDoFoco, tSmooth);
+            transform.localScale = Vector3.Lerp(escalaInicial, escalaDestino, tSmooth);
+            yield return null;
+        }
+
+        transform.localScale = escalaDestino;
+        transform.rotation = Quaternion.identity;
+        transform.position = LimiteMesa.Limitar(
+            posicaoAntesDoFoco,
+            MetadeDoColisor()
+        );
+
+        RestaurarFisica();
+
+        viajandoDeVolta = false;
+        interacaoBloqueada = false;
     }
 
     IEnumerator AplicarDano()
@@ -784,13 +961,26 @@ public class PedraManager : MonoBehaviour
 
     void PedraDestruida()
     {
+        if (sendoDestruida)
+            return;
+
+        sendoDestruida = true;
+
+        // Se a pedra quebrou no modo de quebra, fecha o escurecimento e o
+        // botão X imediatamente, antes do Destroy.
+        TabelaPremiosUI.Esconder(this);
+        PedraFocoUI.Esconder(this);
+
         float recompensaFinal = CalcularRecompensa();
         bool ganhouJackpot = ultimoResultadoFoiJackpot;
 
         GameManager.Instance.AdicionarDinheiro(recompensaFinal);
 
         if (ganhouJackpot)
+        {
             AudioManager.Jackpot();
+            JackpotUI.Mostrar();
+        }
 
         Debug.Log("Recompensa: R$ " + recompensaFinal.ToString("F2"));
 

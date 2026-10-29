@@ -39,6 +39,12 @@ public class PauseManager : MonoBehaviour
         pausado = !pausado;
         painelPause.SetActive(pausado);
         Time.timeScale = pausado ? 0f : 1f;
+
+        // O som e a celebração do jackpot congelam junto com o jogo.
+        if (pausado)
+            AudioManager.PausarJackpot();
+        else
+            AudioManager.RetomarJackpot();
     }
 
     public void Retomar()
@@ -46,6 +52,7 @@ public class PauseManager : MonoBehaviour
         pausado = false;
         painelPause.SetActive(false);
         Time.timeScale = 1f;
+        AudioManager.RetomarJackpot();
     }
 
     /// <summary>Chamado pelo botão "Salvar" do menu de pausa.</summary>
