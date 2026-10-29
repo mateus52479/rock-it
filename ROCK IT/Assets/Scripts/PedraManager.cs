@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using TMPro;
 
 public class PedraManager : MonoBehaviour
@@ -419,6 +420,12 @@ public class PedraManager : MonoBehaviour
     void OnMouseDown()
     {
         if (interacaoBloqueada) return;
+
+        // Cliques que começam na UI (configurações, pause, balão do tutorial)
+        // não devem pegar a pedra que está atrás do painel.
+        if (EventSystem.current != null &&
+            EventSystem.current.IsPointerOverGameObject())
+            return;
 
         segurando = true;
         tempoSegurando = 0f;

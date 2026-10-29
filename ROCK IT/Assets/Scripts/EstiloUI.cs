@@ -989,6 +989,11 @@ public static class EstiloUI
         {
             scroll.horizontal = false;
 
+            // O padrão (1) anda quase nada por clique da roda, o que deixa a
+            // lista de pedras lenta demais. 36 dá cerca de um terço de item
+            // por clique, sem ficar difícil de controlar.
+            scroll.scrollSensitivity = TemaUI.SensibilidadeScroll;
+
             if (scroll.horizontalScrollbar != null)
                 scroll.horizontalScrollbar.gameObject.SetActive(false);
             else

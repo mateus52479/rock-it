@@ -63,6 +63,7 @@ public class ConfiguracoesManager : MonoBehaviour
     {
         ResolverReferencias();
         ResolverRotulosVolume();
+        AjustarScrollResolucoes();
         PopularIdiomas();
         CarregarConfiguracoes();
         LigarControles();
@@ -175,6 +176,22 @@ public class ConfiguracoesManager : MonoBehaviour
     }
 
     // --- Vídeo ----------------------------------------------------------
+
+    /// <summary>
+    /// A lista de resoluções do dropdown usa um ScrollRect próprio. Deixa a
+    /// roda do mouse na mesma velocidade das listas da loja.
+    /// </summary>
+    void AjustarScrollResolucoes()
+    {
+        if (dropdownResolucao == null || dropdownResolucao.template == null)
+            return;
+
+        ScrollRect scroll = dropdownResolucao.template
+            .GetComponentInChildren<ScrollRect>(true);
+
+        if (scroll != null)
+            scroll.scrollSensitivity = TemaUI.SensibilidadeScroll;
+    }
 
     void PopularResolucoes()
     {

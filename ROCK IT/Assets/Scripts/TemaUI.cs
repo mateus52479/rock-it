@@ -48,6 +48,12 @@ public static class TemaUI
     public static readonly Color Vermelho = new Color32(226, 106, 96, 255);
     public static readonly Color Azul = new Color32(96, 146, 194, 255);
 
+    /// <summary>
+    /// Velocidade da roda do mouse nas listas roláveis. O padrão do Unity (1)
+    /// anda quase nada por clique; 36 fica confortável nas listas do jogo.
+    /// </summary>
+    public const float SensibilidadeScroll = 36f;
+
     private static readonly Dictionary<string, Sprite> cache =
         new Dictionary<string, Sprite>();
 

@@ -12,10 +12,8 @@ public class DialogoManager : MonoBehaviour
     private NPCVoador npc;
     private BalaoDialogo balao;
     private DestaqueUI destaque;
-    private Button botaoPular;
 
     private RoteiroDialogo roteiroAtual;
-    private bool parar;
 
     private bool comprouPedra;
     private bool quebrouPedra;
@@ -59,16 +57,6 @@ public class DialogoManager : MonoBehaviour
         destaque = DestaqueUI.Criar(canvasRect);
         npc = NPCVoador.Criar(canvasRect);
         balao = BalaoDialogo.Criar(canvasRect, npc);
-
-        botaoPular = UIUtil.CriarBotao(
-            canvasRect, "Pular", "Pular tutorial",
-            new Vector2(170f, 38f), new Vector2(0f, -505f),
-            new Color(0.30f, 0.30f, 0.38f),
-            Pular);
-
-        TemaUI.EstilizarBotao(botaoPular, TemaUI.EstiloBotao.Fantasma, 17f);
-
-        botaoPular.gameObject.SetActive(false);
     }
 
     public void Executar(RoteiroDialogo roteiro)
@@ -77,12 +65,9 @@ public class DialogoManager : MonoBehaviour
             return;
 
         roteiroAtual = roteiro;
-        parar = false;
 
         npc.gameObject.SetActive(true);
         npc.PosicionarSemVoar(-760f, -420f);
-
-        botaoPular.gameObject.SetActive(true);
 
         StopAllCoroutines();
         StartCoroutine(Rotina());
@@ -92,7 +77,7 @@ public class DialogoManager : MonoBehaviour
     {
         int indice = 0;
 
-        while (indice < roteiroAtual.passos.Length && !parar)
+        while (indice < roteiroAtual.passos.Length)
         {
             PassoDialogo passo = roteiroAtual.passos[indice];
 
@@ -100,8 +85,6 @@ public class DialogoManager : MonoBehaviour
             quebrouPedra = false;
 
             yield return PrepararCena(passo);
-
-            if (parar) break;
 
             npc.IrPara(passo.npcX, passo.npcY);
             yield return new WaitForSeconds(0.7f);
@@ -149,8 +132,7 @@ public class DialogoManager : MonoBehaviour
             indice++;
         }
 
-        if (!parar)
-            Encerrar();
+        Encerrar();
     }
 
     IEnumerator PrepararCena(PassoDialogo passo)
@@ -254,18 +236,10 @@ public class DialogoManager : MonoBehaviour
         painelAtual = indice;
     }
 
-    public void Pular()
-    {
-        parar = true;
-        StopAllCoroutines();
-        Encerrar();
-    }
-
     void Encerrar()
     {
         if (balao != null) balao.Fechar();
         if (destaque != null) destaque.Limpar();
         if (npc != null) npc.gameObject.SetActive(false);
-        if (botaoPular != null) botaoPular.gameObject.SetActive(false);
     }
 }
