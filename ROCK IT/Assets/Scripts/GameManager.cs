@@ -184,7 +184,6 @@ public class GameManager : MonoBehaviour
             else
             {
                 duracaoAnimacao = CalcularDuracao(distancia);
-                AudioManager.ModificandoMoney();
             }
         }
 
@@ -227,6 +226,8 @@ public class GameManager : MonoBehaviour
     {
         valor = SanearValor(valor);
 
+        float anterior = dinheiro;
+
         // Recompensa negativa não pode deixar o saldo negativo: se isso
         // acontecesse o jogador não conseguiria comprar nem a Pedra Comum.
         // O teto evita que uma recompensa gigante vire infinito.
@@ -235,6 +236,12 @@ public class GameManager : MonoBehaviour
             0f,
             DinheiroMaximo
         );
+
+        // Toca sempre que o saldo realmente mudou, seja ganho ou prejuízo.
+        // Fica aqui (e não na animação do HUD) para nenhuma alteração de
+        // dinheiro passar sem som.
+        if (dinheiro != anterior)
+            AudioManager.ModificandoMoney();
 
         MostrarDiferenca(valor);
     }
@@ -250,6 +257,10 @@ public class GameManager : MonoBehaviour
         if (dinheiro < valor) return false;
 
         dinheiro -= valor;
+
+        if (valor > 0f)
+            AudioManager.ModificandoMoney();
+
         MostrarDiferenca(-valor);
         return true;
     }
