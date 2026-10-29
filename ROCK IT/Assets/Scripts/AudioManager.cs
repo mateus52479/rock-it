@@ -20,6 +20,9 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Música do jogo. Se ficar vazio, carrega Resources/Musicas/GameMusic.")]
     public AudioClip musicaJogo;
 
+    [Tooltip("Música da tela de créditos. Se ficar vazio, carrega Resources/Musicas/CreditosMusic.")]
+    public AudioClip musicaCreditos;
+
     [Header("Efeitos")]
     [Tooltip("Barulho da pedra batendo na mesa. Se ficar vazio, carrega Resources/Musicas/PedraCaiu.")]
     public AudioClip clipePedraCaiu;
@@ -164,6 +167,9 @@ public class AudioManager : MonoBehaviour
         if (musicaJogo == null)
             musicaJogo = Resources.Load<AudioClip>(PastaClipes + "GameMusic");
 
+        if (musicaCreditos == null)
+            musicaCreditos = Resources.Load<AudioClip>(PastaClipes + "CreditosMusic");
+
         if (clipePedraCaiu == null)
             clipePedraCaiu = Resources.Load<AudioClip>(PastaClipes + "PedraCaiu");
 
@@ -192,6 +198,9 @@ public class AudioManager : MonoBehaviour
         // A cena nova pode ter o ConfiguracoesManager que faltava na anterior.
         AplicarMixer();
 
+        // A tela de créditos é um overlay: trocar de cena sempre volta para a
+        // música da cena nova.
+        CreditosAbertos = false;
         TocarMusicaDaCena(cena.name);
     }
 
@@ -201,6 +210,26 @@ public class AudioManager : MonoBehaviour
             TocarMusica(musicaMenu, "menu");
         else if (nomeCena == "Jogo")
             TocarMusica(musicaJogo, "jogo");
+    }
+
+    /// <summary>Verdadeiro enquanto a tela de créditos está por cima do menu.</summary>
+    public bool CreditosAbertos { get; private set; }
+
+    /// <summary>
+    /// Troca a música do menu pela trilha dos créditos. Se o clipe não for
+    /// encontrado, a música da cena continua tocando normalmente.
+    /// </summary>
+    public void TocarMusicaCreditos()
+    {
+        CreditosAbertos = true;
+        TocarMusica(musicaCreditos, "creditos");
+    }
+
+    /// <summary>Volta para a música da cena atual ao fechar os créditos.</summary>
+    public void VoltarMusicaDaCena()
+    {
+        CreditosAbertos = false;
+        TocarMusicaDaCena(SceneManager.GetActiveScene().name);
     }
 
     void TocarMusica(AudioClip clipe, string id)
@@ -277,6 +306,20 @@ public class AudioManager : MonoBehaviour
     {
         if (Instance != null)
             Instance.TocarPedraCaiu();
+    }
+
+    /// <summary>Começa a trilha da tela de créditos.</summary>
+    public static void AbrirCreditos()
+    {
+        if (Instance != null)
+            Instance.TocarMusicaCreditos();
+    }
+
+    /// <summary>Devolve a música da cena ao sair dos créditos.</summary>
+    public static void FecharCreditos()
+    {
+        if (Instance != null)
+            Instance.VoltarMusicaDaCena();
     }
 
     /// <summary>Fanfarra do prêmio máximo de uma pedra.</summary>

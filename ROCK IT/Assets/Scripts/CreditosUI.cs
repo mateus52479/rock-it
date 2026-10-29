@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,8 @@ public class CreditosUI : MonoBehaviour
     private float alturaConteudo;
     private float espera;
     private bool rolando = true;
+    private TextMeshProUGUI linhaFinal;
+    private Coroutine finalizacao;
 
     private readonly List<RectTransform> linhas = new List<RectTransform>();
     private readonly List<RectTransform> poeiras = new List<RectTransform>();
@@ -37,12 +40,17 @@ public class CreditosUI : MonoBehaviour
         GameObject canvas = UIUtil.CriarCanvas("CreditosUI", 200);
         instancia = canvas.AddComponent<CreditosUI>();
         instancia.Construir();
+
+        AudioManager.AbrirCreditos();
     }
 
     void OnDestroy()
     {
         if (instancia == this)
+        {
             instancia = null;
+            AudioManager.FecharCreditos();
+        }
     }
 
     void Update()
@@ -72,7 +80,12 @@ public class CreditosUI : MonoBehaviour
             0f, scroll.verticalNormalizedPosition - passo);
 
         if (scroll.verticalNormalizedPosition <= 0f)
+        {
             rolando = false;
+
+            if (finalizacao == null)
+                finalizacao = StartCoroutine(FinalizarCreditos());
+        }
 
         AtualizarPerspectiva();
     }
@@ -159,12 +172,12 @@ public class CreditosUI : MonoBehaviour
         AdicionarEspaco(1280f);
 
         CriarLinha(
-            "ROCK IT", 76f, TemaUI.Acento,
-            FontStyles.Bold, 92f, 8f);
+            "ROCK IT", 100f, TemaUI.Acento,
+            FontStyles.Bold, 120f, 8f);
 
         CriarLinha(
-            "CRÉDITOS", 20f, TemaUI.TextoForte,
-            FontStyles.Normal, 32f, 10f);
+            "CRÉDITOS", 28f, TemaUI.TextoForte,
+            FontStyles.Normal, 44f, 10f);
 
         AdicionarEspaco(80f);
 
@@ -181,8 +194,8 @@ public class CreditosUI : MonoBehaviour
             primeira = false;
 
             CriarLinha(
-                secao.titulo, 15f, TemaUI.Acento,
-                FontStyles.Bold, 26f, 4f);
+                secao.titulo, 21f, TemaUI.Acento,
+                FontStyles.Bold, 36f, 4f);
 
             foreach (string nome in secao.nomes)
             {
@@ -190,8 +203,8 @@ public class CreditosUI : MonoBehaviour
                     continue;
 
                 CriarLinha(
-                    nome, 22f, TemaUI.TextoForte,
-                    FontStyles.Normal, 31f, 0f);
+                    nome, 30f, TemaUI.TextoForte,
+                    FontStyles.Normal, 43f, 0f);
             }
         }
 
@@ -201,8 +214,8 @@ public class CreditosUI : MonoBehaviour
             AdicionarEspaco(22f);
 
             CriarLinha(
-                "TESTES", 15f, TemaUI.Acento,
-                FontStyles.Bold, 26f, 4f);
+                "TESTES", 21f, TemaUI.Acento,
+                FontStyles.Bold, 36f, 4f);
 
             foreach (string nome in CreditosDados.testadores)
             {
@@ -210,8 +223,8 @@ public class CreditosUI : MonoBehaviour
                     continue;
 
                 CriarLinha(
-                    nome, 22f, TemaUI.TextoForte,
-                    FontStyles.Normal, 31f, 0f);
+                    nome, 30f, TemaUI.TextoForte,
+                    FontStyles.Normal, 43f, 0f);
             }
         }
 
@@ -221,32 +234,93 @@ public class CreditosUI : MonoBehaviour
             AdicionarEspaco(30f);
 
             CriarLinha(
-                "MÚSICAS DE TERCEIROS", 15f, TemaUI.Acento,
-                FontStyles.Bold, 26f, 4f);
+                "MÚSICAS DE TERCEIROS", 21f, TemaUI.Acento,
+                FontStyles.Bold, 36f, 4f);
 
             foreach (CreditosDados.Musica musica in CreditosDados.musicasTerceiros)
             {
                 CriarLinha(
                     "\"" + musica.titulo + "\" — " + musica.autor,
-                    19f, TemaUI.TextoForte, FontStyles.Normal, 27f, 0f);
+                    25f, TemaUI.TextoForte, FontStyles.Normal, 36f, 0f);
             }
 
             CriarLinha(
-                CreditosDados.OrigemMusicas, 14f, TemaUI.TextoSuave,
-                FontStyles.Normal, 22f, 0f);
+                CreditosDados.OrigemMusicas, 18f, TemaUI.TextoSuave,
+                FontStyles.Normal, 28f, 0f);
 
             CriarLinha(
-                CreditosDados.LinksMusicas, 13f, TemaUI.TextoFraco,
-                FontStyles.Normal, 20f, 0f);
+                CreditosDados.LinksMusicas, 17f, TemaUI.TextoFraco,
+                FontStyles.Normal, 26f, 0f);
         }
 
         AdicionarEspaco(80f);
 
-        CriarLinha(
-            "Obrigado por jogar.", 20f, TemaUI.Acento,
-            FontStyles.Normal, 30f, 2f);
+        linhaFinal = CriarLinha(
+            "Obrigado por jogar.", 28f, TemaUI.Acento,
+            FontStyles.Normal, 42f, 2f);
 
         AdicionarEspaco(320f);
+    }
+
+    /// <summary>
+    /// Fim do letreiro: apaga as demais linhas e deixa só o "Obrigado por
+    /// jogar." centralizado na tela.
+    /// </summary>
+    IEnumerator FinalizarCreditos()
+    {
+        float duracao = 0.6f;
+        float tempo = 0f;
+        RectTransform rtFinal = linhaFinal != null ? linhaFinal.rectTransform : null;
+
+        while (tempo < duracao)
+        {
+            tempo += Time.unscaledDeltaTime;
+            float alpha = 1f - Mathf.Clamp01(tempo / duracao);
+
+            foreach (RectTransform linha in linhas)
+            {
+                if (linha == null || linha == rtFinal)
+                    continue;
+
+                TextMeshProUGUI texto = linha.GetComponent<TextMeshProUGUI>();
+
+                if (texto != null)
+                    texto.alpha = alpha;
+            }
+
+            yield return null;
+        }
+
+        // Some com todo o conteúdo do letreiro e deixa só a despedida.
+        foreach (Transform filho in conteudo)
+        {
+            if (linhaFinal != null && filho == linhaFinal.transform)
+                continue;
+
+            filho.gameObject.SetActive(false);
+        }
+
+        linhas.Clear();
+
+        if (linhaFinal != null)
+        {
+            RectTransform rt = linhaFinal.rectTransform;
+
+            rt.SetParent(viewport, false);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(LarguraTexto, 70f);
+            rt.localScale = Vector3.one;
+
+            linhaFinal.alpha = 1f;
+        }
+
+        if (scroll != null)
+            scroll.enabled = false;
+
+        finalizacao = null;
     }
 
     void CriarPoeira(Transform pai)
@@ -367,6 +441,7 @@ public class CreditosUI : MonoBehaviour
 
     void Fechar()
     {
+        AudioManager.FecharCreditos();
         instancia = null;
         Destroy(gameObject);
     }
