@@ -8,7 +8,14 @@ using UnityEngine.UI;
 /// </summary>
 public class DialogoManager : MonoBehaviour
 {
+    /// <summary>Ordem normal do tutorial: acima dos painéis do jogo.</summary>
+    private const int OrdemTutorial = 300;
+
+    /// <summary>Ordem enquanto um menu está aberto: atrás da interface do jogo.</summary>
+    private const int OrdemTutorialAtrasDoMenu = -1;
+
     private RectTransform canvasRect;
+    private Canvas canvasDoTutorial;
     private NPCVoador npc;
     private BalaoDialogo balao;
     private DestaqueUI destaque;
@@ -51,12 +58,35 @@ public class DialogoManager : MonoBehaviour
 
     void ConstruirUI()
     {
-        GameObject canvas = UIUtil.CriarCanvas("DialogoCanvas", 300);
+        GameObject canvas = UIUtil.CriarCanvas("DialogoCanvas", OrdemTutorial);
         canvasRect = (RectTransform)canvas.transform;
+        canvasDoTutorial = canvas.GetComponent<Canvas>();
 
         destaque = DestaqueUI.Criar(canvasRect);
         npc = NPCVoador.Criar(canvasRect);
         balao = BalaoDialogo.Criar(canvasRect, npc);
+    }
+
+    /// <summary>
+    /// O tutorial vive em um Canvas com sorting order maior que o do jogo.
+    /// Enquanto o pause ou as configurações estiverem abertos, o tutorial
+    /// continua na tela (congelado pelo Time.timeScale) mas desce para trás
+    /// da interface, para o menu sobrepor o NPC, o balão e o destaque.
+    /// </summary>
+    void Update()
+    {
+        if (canvasDoTutorial == null)
+            return;
+
+        bool menuNaFrente =
+            (PauseManager.Instance != null && PauseManager.Instance.EstaPausado) ||
+            (ConfiguracoesManager.Instance != null && ConfiguracoesManager.Instance.ConfiguracoesAbertas);
+
+        int ordem = menuNaFrente ? OrdemTutorialAtrasDoMenu : OrdemTutorial;
+
+        // Só altera a ordem quando o estado realmente muda.
+        if (canvasDoTutorial.sortingOrder != ordem)
+            canvasDoTutorial.sortingOrder = ordem;
     }
 
     public void Executar(RoteiroDialogo roteiro)

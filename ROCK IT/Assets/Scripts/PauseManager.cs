@@ -7,6 +7,9 @@ public class PauseManager : MonoBehaviour
 
     private bool pausado = false;
 
+    /// <summary>Usado pelo tutorial para não ficar por cima do menu de pause.</summary>
+    public bool EstaPausado { get { return pausado; } }
+
     void Awake()
     {
         Instance = this;
@@ -14,8 +17,21 @@ public class PauseManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-            AlternarPause();
+        if (!Input.GetKeyDown(KeyCode.Escape))
+            return;
+
+        // Se as configurações estão abertas, o Esc fecha tudo: as
+        // configurações e o pause, voltando direto para o jogo. Antes ele
+        // despausava escondido atrás do painel e deixava o pause na tela.
+        if (ConfiguracoesManager.Instance != null &&
+            ConfiguracoesManager.Instance.ConfiguracoesAbertas)
+        {
+            ConfiguracoesManager.Instance.FecharConfiguracoes();
+            Retomar();
+            return;
+        }
+
+        AlternarPause();
     }
 
     public void AlternarPause()

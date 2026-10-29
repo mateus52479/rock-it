@@ -25,6 +25,12 @@ public class ConfiguracoesManager : MonoBehaviour
     public GameObject painelConfiguracoes;
     public GameObject painelMenu;
 
+    /// <summary>Usado pelo tutorial para não ficar por cima das configurações.</summary>
+    public bool ConfiguracoesAbertas
+    {
+        get { return painelConfiguracoes != null && painelConfiguracoes.activeInHierarchy; }
+    }
+
     [Header("Audio")]
     public Slider sliderVolumeGeral;
     public Slider sliderVolumeMusica;
@@ -121,7 +127,17 @@ public class ConfiguracoesManager : MonoBehaviour
             painelConfiguracoes.SetActive(false);
 
         if (painelMenu != null)
-            painelMenu.SetActive(true);
+        {
+            // No jogo, painelMenu é o painel de pause. Ele só pode voltar se
+            // o jogo ainda estiver pausado; senão reaparecia por cima do jogo
+            // depois de fechar as configurações com Esc.
+            bool ehPainelPause =
+                PauseManager.Instance != null &&
+                painelMenu == PauseManager.Instance.painelPause;
+
+            if (!ehPainelPause || PauseManager.Instance.EstaPausado)
+                painelMenu.SetActive(true);
+        }
     }
 
     // --- Áudio ----------------------------------------------------------
