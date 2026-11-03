@@ -80,6 +80,8 @@ public class PedraManager : MonoBehaviour
     private bool valorInvertido = false;
     private bool garantirMaximo = false;
     private SpriteRenderer contornoScanner;
+    private bool contornoScannerEstavaAtivo;
+    private bool visualEscondido;
 
     [Header("Inversor")]
     [Tooltip("Além de inverter o valor, o Inversor devolve o preço pago com " +
@@ -892,7 +894,7 @@ public class PedraManager : MonoBehaviour
         vidaAtual = Mathf.Max(0, vidaAtual - danoFinal);
         AtualizarSpritePorVida();
         AtualizarTextoVida();
-        SpawnarTextoDano(danoFinal, critico, posicaoUltimoClique + Vector3.up * 0.3f);
+        SpawnarTextoDano(danoFinal, critico);
 
         float intensidade = critico ? intensidadeTremor * 2f : intensidadeTremor;
         float duracao = critico ? duracaoTremor * 1.5f : duracaoTremor;
@@ -965,11 +967,43 @@ public class PedraManager : MonoBehaviour
         transform.localScale = escalaAtual;
     }
 
-    void SpawnarTextoDano(int dano, bool critico, Vector3 posicaoClique)
+    /// <summary>
+    /// Ponto logo acima da área desenhada da pedra. Antes o texto nascia na
+    /// posição do clique, então quem clicava na parte de baixo via o número
+    /// embaixo da pedra.
+    /// </summary>
+    Vector3 PosicaoAcimaDaPedra()
+    {
+        if (colisor == null)
+            PrepararColisor();
+
+        float topo;
+
+        if (colisor != null)
+        {
+            topo = colisor.bounds.max.y;
+        }
+        else if (spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            Bounds visivel = SpriteUtil.ObterBoundsVisiveis(spriteRenderer.sprite);
+            topo = transform.position.y + visivel.max.y * transform.lossyScale.y;
+        }
+        else
+        {
+            topo = transform.position.y + 0.5f;
+        }
+
+        return new Vector3(transform.position.x, topo + 0.15f, 0f);
+    }
+
+    void SpawnarTextoDano(int dano, bool critico)
     {
         if (prefabTextoFlutuante == null) return;
 
-        GameObject obj = Instantiate(prefabTextoFlutuante, posicaoClique, Quaternion.identity);
+        GameObject obj = Instantiate(
+            prefabTextoFlutuante,
+            PosicaoAcimaDaPedra(),
+            Quaternion.identity);
         TextoFlutuante tf = obj.GetComponent<TextoFlutuante>();
 
         if (tf == null) return;
@@ -985,7 +1019,7 @@ public class PedraManager : MonoBehaviour
         Color cor = critico ? new Color(1f, 0.2f, 0.2f) : Color.white;
         float tamanho = critico ? 8f : 5f;
 
-        tf.Inicializar(conteudo, cor, tamanho);
+        tf.Inicializar(conteudo, cor, tamanho, true);
     }
 
     void AtualizarTextoVida()
@@ -1119,6 +1153,52 @@ public class PedraManager : MonoBehaviour
         return pedra.SortearValor(nivelSorte);
     }
 
+    /// <summary>
+    /// Esconde a pedra enquanto uma máquina a está processando: o desenho,
+    /// o texto de vida, o contorno do Scanner e o collider somem. O objeto
+    /// continua vivo para a máquina cobrar dano e pagar a recompensa.
+    /// </summary>
+    public void EsconderTemporariamente()
+    {
+        visualEscondido = true;
+
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
+
+        if (vidaText != null)
+            vidaText.gameObject.SetActive(false);
+
+        if (contornoScanner != null)
+        {
+            contornoScannerEstavaAtivo = contornoScanner.enabled;
+            contornoScanner.enabled = false;
+        }
+
+        if (colisor != null)
+            colisor.enabled = false;
+    }
+
+    /// <summary>Devolve o desenho e o collider depois que a máquina terminou.</summary>
+    public void MostrarNovamente()
+    {
+        if (!visualEscondido)
+            return;
+
+        visualEscondido = false;
+
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = true;
+
+        if (vidaText != null)
+            vidaText.gameObject.SetActive(true);
+
+        if (colisor != null)
+            colisor.enabled = true;
+
+        if (contornoScanner != null && contornoScannerEstavaAtivo)
+            AtualizarContornoScanner(true);
+    }
+
     public void BloquearInteracao(bool bloquear)
     {
         interacaoBloqueada = bloquear;
@@ -1202,6 +1282,15 @@ public class PedraManager : MonoBehaviour
             : resultadoSorteado;
     }
 
+    /// <summary>
+    /// Valor que a pedra deve render, já considerando o Inversor. Usado pela
+    /// máquina para escolher entre o desenho positivo e o negativo.
+    /// </summary>
+    public float RecompensaPrevista
+    {
+        get { return RecompensaBasePrevista(); }
+    }
+
     public void InverterValores()
     {
         valorInvertido = !valorInvertido;
@@ -1217,12 +1306,14 @@ public class PedraManager : MonoBehaviour
         return dados != null ? dados.precoCompra : 0;
     }
 
-    public bool ReceberDanoExterno(int dano)
+    public bool ReceberDanoExterno(int dano, bool mostrarTexto = true)
     {
         vidaAtual = Mathf.Max(0, vidaAtual - Mathf.Max(0, dano));
         AtualizarSpritePorVida();
         AtualizarTextoVida();
-        SpawnarTextoDano(dano, false, transform.position + Vector3.up * 0.3f);
+
+        if (mostrarTexto)
+            SpawnarTextoDano(dano, false);
 
         if (vidaAtual <= 0)
         {
@@ -1235,4 +1326,14 @@ public class PedraManager : MonoBehaviour
 
     public string GetNomePedra() => dados != null ? dados.nome : "";
     public int GetVidaAtual() => vidaAtual;
+    public int GetVidaMaxima() => dados != null ? dados.vidaMaxima : 0;
+
+    /// <summary>Fração da vida já quebrada, de 0 (cheia) a 1 (destruída).</summary>
+    public float GetPercentualConcluido()
+    {
+        if (dados == null || dados.vidaMaxima <= 0)
+            return 0f;
+
+        return Mathf.Clamp01(1f - (float)vidaAtual / dados.vidaMaxima);
+    }
 }

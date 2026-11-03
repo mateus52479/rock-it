@@ -79,15 +79,21 @@ public class PedraDados
             return valor;
 
         // Ceil em número negativo arredonda em direção ao zero: -4,75 vira -4.
-        return Mathf.CeilToInt(
+        // O piso em -1 evita a linha de prejuízo virar outro "0" e aparecerem
+        // dois zeros na tabela (o prejuízo e o resultado neutro) depois que a
+        // Sorte encolhe a perda.
+        int ajustado = Mathf.CeilToInt(
             valor * StatusManager.FatorPerdaNoNivel(nivelSorte));
+
+        return Mathf.Min(ajustado, -1);
     }
 
     /// <summary>
     /// Chances com o deslocamento de Sorte já aplicado. Cada nível tira 1,5
     /// ponto percentual dos piores resultados (prejuízo primeiro, depois o
-    /// zero) e joga tudo no prêmio máximo, até o teto de 12 pontos. Assim a
-    /// Sorte melhora as chances sem transformar toda pedra em prêmio máximo.
+    /// zero e os prêmios menores) e joga tudo no prêmio máximo, até o teto de
+    /// 95 pontos. No nível máximo de Sorte a tabela inteira fica no prêmio
+    /// máximo, inclusive a do Pedacinho do Sol.
     /// </summary>
     public float[] ObterChancesAjustadas(int nivelSorte)
     {

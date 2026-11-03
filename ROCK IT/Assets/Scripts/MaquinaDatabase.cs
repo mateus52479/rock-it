@@ -36,7 +36,7 @@ public class MaquinaDatabase : MonoBehaviour
             new MaquinaDados {
                 id        = "quebrador",
                 nome      = "Quebrador Automático",
-                descricao = "Coloque uma pedra aqui. Ela será quebrada automaticamente a 20% do seu dano por segundo.",
+                descricao = "Coloque pedras aqui. Cada uma é quebrada automaticamente com o seu dano por segundo.",
                 preco     = 2500,
                 idUpgrade = ""
             },
@@ -46,14 +46,6 @@ public class MaquinaDatabase : MonoBehaviour
                 descricao = "Inverte o valor da pedra e devolve o preço pago com 25% de bônus. Na média fica justo: ganha na maioria das vezes, mas o prêmio máximo vira um prejuízo enorme.",
                 preco     = 7000,
                 idUpgrade = ""
-            },
-            new MaquinaDados {
-                id         = "loja_cosmeticos",
-                nome       = "Loja de Cosméticos",
-                descricao  = "Em breve: compre skins para sua pedra de estimação.",
-                preco      = 500,
-                idUpgrade  = "",
-                disponivel = false
             }
         };
     }

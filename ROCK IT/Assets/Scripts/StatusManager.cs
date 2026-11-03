@@ -125,15 +125,21 @@ public class StatusManager : MonoBehaviour
     // --- SORTE ---
     /// <summary>
     /// Cada nível de Sorte move 1,5 ponto percentual dos piores resultados
-    /// (prejuízo primeiro, depois o zero) para o prêmio máximo, até um teto de
-    /// 12 pontos. Além disso, o valor do prejuízo encolhe 2% por nível (no
-    /// máximo 30%). O teto é o que impede a Sorte de transformar toda pedra em
-    /// prêmio máximo nos níveis altos.
+    /// (prejuízo primeiro, depois o zero e os prêmios menores) para o prêmio
+    /// máximo. O teto é toda a chance fora do prêmio máximo da tabela mais
+    /// arriscada (Pedacinho do Sol: 50 + 15 + 30 = 95 pontos). Assim a Sorte
+    /// só chega ao fim no nível 65, quando toda pedra passa a pagar o prêmio
+    /// máximo. Além disso, o valor do prejuízo encolhe 2% por nível (no
+    /// máximo 30%).
     /// </summary>
     public const float DeslocamentoSortePorNivel = 1.5f;
 
-    /// <summary>Quanto a chance se desloca para o prêmio máximo, no total.</summary>
-    public const float DeslocamentoSorteMaximo = 12f;
+    /// <summary>
+    /// Quanto a chance se desloca para o prêmio máximo, no total. 95 é o
+    /// máximo que as tabelas permitem drenar sem tocar no próprio prêmio
+    /// máximo, então no nível 65 o prêmio máximo fica com 100% de chance.
+    /// </summary>
+    public const float DeslocamentoSorteMaximo = 95f;
 
     /// <summary>Quanto do prejuízo original encolhe em cada nível de Sorte.</summary>
     public const float ReducaoPerdaPorNivel = 0.02f;
@@ -178,8 +184,8 @@ public class StatusManager : MonoBehaviour
     }
 
     /// <summary>
-    /// A Sorte tem dois efeitos com teto: deslocar 12 pontos de chance e
-    /// reduzir 30% do prejuízo. Depois disso, subir Sorte não muda mais nada.
+    /// A Sorte termina quando toda a chance fora do prêmio máximo já foi
+    /// drenada (95 pontos, nível 65) e o prejuízo já encolheu 30%.
     /// </summary>
     public bool SorteNoMaximo()
     {

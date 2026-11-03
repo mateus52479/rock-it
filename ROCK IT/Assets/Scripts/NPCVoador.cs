@@ -34,6 +34,17 @@ public class NPCVoador : MonoBehaviour
 
         imagem.raycastTarget = false;
 
+        // O NPC do tutorial era um quadrado branco. Usa a pedrinha recortada
+        // para o desenho ocupar o espaço do balão sem a margem transparente.
+        Sprite sprite = SpriteUtil.CarregarDeResources("Sprites/Pedras/pedrinha");
+
+        if (sprite != null)
+        {
+            imagem.sprite = SpriteUtil.RecortarParaVisivel(sprite);
+            imagem.preserveAspect = true;
+            imagem.rectTransform.sizeDelta = new Vector2(110f, 110f);
+        }
+
         NPCVoador npc = imagem.gameObject.AddComponent<NPCVoador>();
         npc.gameObject.SetActive(false);
 

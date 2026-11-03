@@ -45,7 +45,17 @@ public static class LimiteMesa
             return;
         }
 
-        Bounds limites = desenho.bounds;
+        Bounds visivel = SpriteUtil.ObterBoundsVisiveis(desenho.sprite);
+        Vector3 escala = mesa.transform.lossyScale;
+        Vector3 centro = mesa.transform.TransformPoint(visivel.center);
+
+        Bounds limites = new Bounds(
+            centro,
+            new Vector3(
+                visivel.size.x * Mathf.Abs(escala.x),
+                visivel.size.y * Mathf.Abs(escala.y),
+                0f));
+
         float pes = limites.size.y * RecuoPernas;
 
         area = new Rect(

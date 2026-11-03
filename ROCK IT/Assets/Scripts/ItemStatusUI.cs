@@ -129,11 +129,42 @@ public class ItemStatusUI : MonoBehaviour
                 break;
             case 1:
                 textoNome.text = Traducao.T("Sorte");
-                textoNivel.text = Traducao.TF(
-                    "Nível {0}\nSorte: +{1}% para +{2}%",
-                    StatusManager.Instance.nivelSorte,
-                    FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorte()),
-                    FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorteProximoNivel()));
+
+                if (StatusManager.Instance.SorteNoMaximo())
+                {
+                    textoNivel.text = Traducao.TF(
+                        "Nível {0}\nSorte no máximo",
+                        StatusManager.Instance.nivelSorte);
+
+                    textoCusto.text = Traducao.T("MÁX.");
+                    textoCusto.color = TemaUI.Acento;
+                    botaoUpgrade.interactable = false;
+                    break;
+                }
+
+                botaoUpgrade.interactable = true;
+
+                // Até o teto de deslocamento, o ganho visível é a chance de
+                // prêmio máximo. Depois disso, a Sorte continua reduzindo o
+                // prejuízo, então a vitrine passa a mostrar esse efeito.
+                if (StatusManager.Instance.GetDeslocamentoSorte()
+                    >= StatusManager.DeslocamentoSorteMaximo - 0.001f)
+                {
+                    textoNivel.text = Traducao.TF(
+                        "Nível {0}\nPerda: -{1}% para -{2}%",
+                        StatusManager.Instance.nivelSorte,
+                        FormatarPorcentagem(StatusManager.Instance.GetReducaoPerda()),
+                        FormatarPorcentagem(StatusManager.Instance.GetReducaoPerdaProximoNivel()));
+                }
+                else
+                {
+                    textoNivel.text = Traducao.TF(
+                        "Nível {0}\nSorte: +{1}% para +{2}%",
+                        StatusManager.Instance.nivelSorte,
+                        FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorte()),
+                        FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorteProximoNivel()));
+                }
+
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelSorte());
                 break;
             case 2:

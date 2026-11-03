@@ -150,6 +150,8 @@ public class ItemMaquinaUI : MonoBehaviour
                 icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/LATA DE LIXO DE OURO");
             else if (maquina.id == "scanner")
                 icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/Scanner");
+            else if (maquina.id == "inversor")
+                icone = SpriteUtil.CarregarDeResources("Sprites/Maquinas/airfryer");
 
             if (icone != null)
             {

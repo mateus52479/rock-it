@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Monta o chão de tijolos como fundo da cena do Jogo. O desenho é repetido
-/// (draw mode Tiled) e redimensionado para cobrir a câmera em qualquer
-/// resolução, então a mesa, as máquinas e as pedras ficam por cima dele.
+/// Monta o chão de pedra como fundo da cena do Jogo. O desenho é esticado
+/// proporcionalmente (cover) para cobrir a câmera em qualquer resolução,
+/// então a mesa, as máquinas e as pedras ficam por cima dele.
 /// Fica atrás de tudo por causa do sortingOrder bem negativo.
 /// </summary>
 public class ChaoFundo : MonoBehaviour
@@ -13,8 +13,8 @@ public class ChaoFundo : MonoBehaviour
     private const string CenaDoJogo = "Jogo";
     private const int OrdemDesenho = -100;
 
-    [Tooltip("Margem extra de tiles para o fundo nunca terminar dentro da tela.")]
-    public float margemTiles = 1f;
+    [Tooltip("Margem extra (em fração) para o fundo nunca terminar dentro da tela.")]
+    public float margemTela = 0.04f;
 
     private static ChaoFundo hook;
 
@@ -98,8 +98,7 @@ public class ChaoFundo : MonoBehaviour
             GameObject go = new GameObject("ChaoFundo");
             desenho = go.AddComponent<SpriteRenderer>();
             desenho.sprite = sprite;
-            desenho.drawMode = SpriteDrawMode.Tiled;
-            desenho.tileMode = SpriteTileMode.Continuous;
+            desenho.drawMode = SpriteDrawMode.Simple;
             desenho.sortingOrder = OrdemDesenho;
             desenho.color = Color.white;
         }
@@ -154,14 +153,19 @@ public class ChaoFundo : MonoBehaviour
         float altura = cameraJogo.orthographicSize * 2f;
         float largura = altura * cameraJogo.aspect;
 
-        Vector2 tile = desenho.sprite != null ? (Vector2)desenho.sprite.bounds.size : new Vector2(5.31f, 4.32f);
+        Vector2 tamanhoSprite = desenho.sprite != null
+            ? (Vector2)desenho.sprite.bounds.size
+            : new Vector2(8.25f, 5.67f);
 
-        // Uma margem de um tile em cada lado cobre a tela mesmo quando a
-        // resolução muda ou a câmera se move um pouco.
-        desenho.size = new Vector2(
-            largura + tile.x * Mathf.Max(0f, margemTiles),
-            altura + tile.y * Mathf.Max(0f, margemTiles)
-        );
+        if (tamanhoSprite.x <= 0f || tamanhoSprite.y <= 0f)
+            return;
+
+        // Cover: aumenta proporcionalmente até cobrir a tela inteira nos dois
+        // eixos, sem repetir o desenho e sem deixar sobras nas bordas.
+        float escala = Mathf.Max(largura / tamanhoSprite.x, altura / tamanhoSprite.y);
+        escala *= 1f + Mathf.Max(0f, margemTela);
+
+        desenho.transform.localScale = Vector3.one * escala;
 
         Vector3 posicao = cameraJogo.transform.position;
         desenho.transform.position = new Vector3(posicao.x, posicao.y, 0f);

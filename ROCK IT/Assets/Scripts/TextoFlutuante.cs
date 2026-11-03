@@ -8,11 +8,21 @@ public class TextoFlutuante : MonoBehaviour
     public float duracaoVida = 0.8f;
     public float velocidadeSubida = 1.5f;
 
-    public void Inicializar(string conteudo, Color cor, float tamanho)
+    public void Inicializar(string conteudo, Color cor, float tamanho, bool apoiarAcimaDoPonto = false)
     {
         texto.text = conteudo;
         texto.color = cor;
         texto.fontSize = tamanho;
+
+        // O texto nasce centrado no ponto recebido. Para o dano, sobe metade
+        // da própria altura: a base do número fica logo acima da pedra, em vez
+        // de o número crescer para cima e para baixo a partir do clique.
+        if (apoiarAcimaDoPonto)
+        {
+            texto.ForceMeshUpdate();
+            transform.position += Vector3.up * texto.bounds.extents.y;
+        }
+
         StartCoroutine(Animar());
     }
 

@@ -1,5 +1,7 @@
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
 {
@@ -8,16 +10,33 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
     public Color corOcupada = Color.cyan;
 
     [Header("Dano")]
-    [Tooltip("Fatia do dano do jogador aplicada a cada ataque. Assim o quebrador acompanha a progressão.")]
-    public float percentualDoDanoDoJogador = 0.2f;
+    [Tooltip("Fração do dano do jogador aplicada por segundo. 1 = dano normal, sem redução.")]
+    public float percentualDoDanoDoJogador = 1f;
+
+    [Tooltip("Quantos golpes por segundo o quebrador aplica em cada pedra.")]
+    public int ataquesPorSegundo = 1;
+
+    [Header("Tremor")]
+    [Tooltip("Quanto o quebrador anda para os lados enquanto processa pedras.")]
+    public float amplitudeTremor = 0.06f;
 
     private bool ativo = false;
-    private PedraManager pedraAtual = null;
-    private int ataquesPorSegundo = 1;
+    private readonly List<PedraManager> pedras = new List<PedraManager>();
+    private Coroutine rotinaQuebra;
+    private Coroutine rotinaTremor;
+    private Vector3 posicaoBase;
+    private bool painelAberto;
+
+    /// <summary>Pedras que estão sendo quebradas agora, na ordem em que entraram.</summary>
+    public List<PedraManager> PedrasProcessando
+    {
+        get { return pedras; }
+    }
 
     void Awake()
     {
         GarantirSprite();
+        posicaoBase = transform.position;
     }
 
     void GarantirSprite()
@@ -31,55 +50,163 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
         GarantirSprite();
 
         ativo = true;
+        posicaoBase = transform.position;
         gameObject.SetActive(true);
 
         if (spriteRenderer != null)
             spriteRenderer.color = corVazia;
     }
 
+    /// <summary>Aceita quantas pedras o jogador conseguir arrastar para cima.</summary>
     public bool PodeReceber(PedraManager pedra)
     {
-        return ativo && pedraAtual == null;
+        return ativo;
     }
 
     public void ReceberPedra(PedraManager pedra)
     {
-        if (pedra == null || !PodeReceber(pedra)) return;
+        if (pedra == null || !ativo || pedras.Contains(pedra)) return;
 
         GarantirSprite();
 
-        pedraAtual = pedra;
-        pedra.transform.position = transform.position;
+        pedras.Add(pedra);
+
         pedra.BloquearInteracao(true);
+        pedra.EsconderTemporariamente();
+        pedra.transform.position = posicaoBase;
 
         if (spriteRenderer != null)
             spriteRenderer.color = corOcupada;
 
-        StartCoroutine(QuebrarAutomaticamente());
+        if (rotinaQuebra == null)
+            rotinaQuebra = StartCoroutine(QuebrarAutomaticamente());
+
+        if (rotinaTremor == null)
+            rotinaTremor = StartCoroutine(Tremer());
     }
 
     IEnumerator QuebrarAutomaticamente()
     {
-        while (pedraAtual != null)
+        while (pedras.Count > 0)
         {
             yield return new WaitForSeconds(1f / Mathf.Max(1, ataquesPorSegundo));
 
-            if (pedraAtual == null) break;
+            int dano = DanoPorSegundo();
 
-            float danoFlutuante = StatusManager.Instance.GetDanoForca()
-                * Mathf.Max(0f, percentualDoDanoDoJogador);
-
-            int dano = Mathf.Max(1, (int)Mathf.Min(danoFlutuante, 2000000000f));
-
-            bool destruida = pedraAtual.ReceberDanoExterno(dano);
-            if (destruida)
+            // Percorre de trás para frente porque uma pedra destruída sai da
+            // lista no mesmo quadro.
+            for (int i = pedras.Count - 1; i >= 0; i--)
             {
-                pedraAtual = null;
+                PedraManager pedra = pedras[i];
 
-                if (spriteRenderer != null)
-                    spriteRenderer.color = corVazia;
+                if (pedra == null)
+                {
+                    pedras.RemoveAt(i);
+                    continue;
+                }
+
+                bool destruida = pedra.ReceberDanoExterno(dano, false);
+
+                if (destruida)
+                    pedras.RemoveAt(i);
             }
         }
+
+        rotinaQuebra = null;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = corVazia;
+
+        transform.position = posicaoBase;
+    }
+
+    IEnumerator Tremer()
+    {
+        float tempo = 0f;
+
+        while (pedras.Count > 0)
+        {
+            tempo += Time.deltaTime;
+
+            transform.position = posicaoBase + new Vector3(
+                Mathf.Sin(tempo * 52f) * amplitudeTremor,
+                Mathf.Cos(tempo * 67f) * amplitudeTremor * 0.6f,
+                0f);
+
+            yield return null;
+        }
+
+        transform.position = posicaoBase;
+        rotinaTremor = null;
+    }
+
+    int DanoPorSegundo()
+    {
+        float dano = StatusManager.Instance != null
+            ? StatusManager.Instance.GetDanoForca()
+            : 1f;
+
+        dano *= Mathf.Max(0f, percentualDoDanoDoJogador);
+
+        return Mathf.Max(1, (int)Mathf.Min(dano, 2000000000f));
+    }
+
+    /// <summary>
+    /// Clique abre/fecha a telinha com a conclusão das pedras. Ela fica ao
+    /// lado do quebrador, como a janela de status, só que menor.
+    /// </summary>
+    void OnMouseDown()
+    {
+        if (!ativo)
+            return;
+
+        if (EventSystem.current != null &&
+            EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        if (PauseManager.Instance != null && PauseManager.Instance.EstaPausado)
+            return;
+
+        if (LojaManager.LojaAberta)
+            return;
+
+        painelAberto = !painelAberto;
+
+        if (painelAberto)
+            QuebradorPainelUI.Mostrar(this);
+        else
+            QuebradorPainelUI.Esconder(this);
+    }
+
+    public void FecharPainel()
+    {
+        painelAberto = false;
+        QuebradorPainelUI.Esconder(this);
+    }
+
+    void OnDisable()
+    {
+        // O OnDisable também roda quando o MaquinaManager esconde a máquina
+        // ainda não comprada. Nesse caso não mexe na posição: ela já foi
+        // ajustada pelo manager e o Ativar() vai capturar a posição certa.
+        if (ativo)
+        {
+            if (rotinaQuebra != null)
+            {
+                StopCoroutine(rotinaQuebra);
+                rotinaQuebra = null;
+            }
+
+            if (rotinaTremor != null)
+            {
+                StopCoroutine(rotinaTremor);
+                rotinaTremor = null;
+            }
+
+            transform.position = posicaoBase;
+        }
+
+        FecharPainel();
     }
 
     public void Evoluir()
