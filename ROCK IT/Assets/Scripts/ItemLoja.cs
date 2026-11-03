@@ -199,7 +199,7 @@ public class ItemLoja : MonoBehaviour
         if (!gratis &&
             StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
-            preco = Mathf.RoundToInt(preco * 0.75f);
+            preco = Mathf.RoundToInt(preco * 0.85f);
         }
 
         string texto = gratis

@@ -53,6 +53,9 @@ public class PedraManager : MonoBehaviour
     [Tooltip("As máquinas desenham na ordem 0; a pedra fica na frente delas.")]
     public int ordemDesenho = 10;
 
+    [Tooltip("Quanto a pedra sobe na ordem de desenho enquanto está ampliada. Sem isso, outra pedra com a mesma ordem pode cobri-la.")]
+    public int prioridadeFoco = 50;
+
     private PedraDados dados;
     private int vidaAtual;
     private bool estaAtiva = false;
@@ -77,6 +80,12 @@ public class PedraManager : MonoBehaviour
     private bool valorInvertido = false;
     private bool garantirMaximo = false;
     private SpriteRenderer contornoScanner;
+
+    [Header("Inversor")]
+    [Tooltip("Além de inverter o valor, o Inversor devolve o preço pago com " +
+             "este bônus. 1.25 mantém a máquina justa com a margem das " +
+             "tabelas de pedra.")]
+    public float bonusInversor = 1.25f;
 
     // Estado do modo de quebra: a pedra ampliada não pode ser arrastada nem
     // empurrada pelas outras pedras enquanto está no centro da tela.
@@ -145,15 +154,34 @@ public class PedraManager : MonoBehaviour
     /// </summary>
     void AplicarOrdemDeDesenho()
     {
+        AplicarOrdemDeDesenho(ordemDesenho);
+    }
+
+    /// <summary>
+    /// Coloca a pedra (e o texto de vida) na ordem pedida. Enquanto está em
+    /// foco ela sobe para a frente de todas as outras, que continuam na mesa.
+    /// </summary>
+    void AplicarOrdemDeDesenho(int ordem)
+    {
         if (spriteRenderer != null)
-            spriteRenderer.sortingOrder = ordemDesenho;
+            spriteRenderer.sortingOrder = ordem;
+
+        // O contorno do Scanner acompanha a pedra, senão ele fica para trás
+        // quando ela sobe para o foco.
+        if (contornoScanner != null)
+        {
+            if (spriteRenderer != null)
+                contornoScanner.sortingLayerID = spriteRenderer.sortingLayerID;
+
+            contornoScanner.sortingOrder = ordem;
+        }
 
         if (vidaText == null) return;
 
         MeshRenderer desenhoDoTexto = vidaText.GetComponent<MeshRenderer>();
 
         if (desenhoDoTexto != null)
-            desenhoDoTexto.sortingOrder = ordemDesenho + 1;
+            desenhoDoTexto.sortingOrder = ordem + 1;
     }
 
     /// <summary>
@@ -636,6 +664,10 @@ public class PedraManager : MonoBehaviour
         interacaoBloqueada = true;
         posicaoAntesDoFoco = transform.position;
 
+        // Sobe na ordem de desenho para nenhuma pedra da mesa cobrir a que
+        // está sendo quebrada.
+        AplicarOrdemDeDesenho(ordemDesenho + prioridadeFoco);
+
         // A pedra é movida na mão até o centro. Sem isso, o Rigidbody2D
         // continua empurrando e sendo empurrado pelas outras pedras no
         // caminho, e a pedra fica tremendo/glitando.
@@ -833,6 +865,9 @@ public class PedraManager : MonoBehaviour
 
         RestaurarFisica();
 
+        // De volta ao lugar dela na mesa: volta à ordem normal de desenho.
+        AplicarOrdemDeDesenho();
+
         viajandoDeVolta = false;
         interacaoBloqueada = false;
     }
@@ -1001,7 +1036,7 @@ public class PedraManager : MonoBehaviour
             ultimoResultadoFoiJackpot = maiorValor > 0 && !valorInvertido;
 
             return valorInvertido
-                ? -maiorValor + dados.precoCompra
+                ? -maiorValor + dados.precoCompra * bonusInversor
                 : maiorValor;
         }
 
@@ -1014,10 +1049,10 @@ public class PedraManager : MonoBehaviour
 
         if (StatusManager.Instance.TemHabilidade("trevo_quatro_folhas"))
             if (recompensaBase >= maiorValor)
-                recompensaBase *= 2;
+                recompensaBase = Mathf.RoundToInt(recompensaBase * 1.5f);
 
         if (StatusManager.Instance.TemHabilidade("analista_profissional"))
-            if (Random.value < 0.1f)
+            if (Random.value < 0.05f)
                 recompensaBase = maiorValor;
 
         // Prêmio máximo da tabela (o Inversor fica de fora: ali o valor máximo
@@ -1032,26 +1067,27 @@ public class PedraManager : MonoBehaviour
             recompensa *= StatusManager.Instance.GetMultiplicadorFortuna();
 
         if (StatusManager.Instance.TemHabilidade("buque_trevos"))
-            recompensa *= 1.5f;
+            recompensa *= 1.25f;
 
         return recompensa;
     }
 
     /// <summary>
-    /// O Inversor troca o sinal do valor e soma o preço pago de volta, então
-    /// a média fica neutra ("justa"). Fortuna e buquê continuam valendo só
-    /// sobre o lucro, para não aumentar o prejuízo.
+    /// O Inversor troca o sinal do valor e devolve o preço pago com um bônus,
+    /// então a média fica neutra ("justa") mesmo com as tabelas tendo margem
+    /// positiva. Fortuna e buquê continuam valendo só sobre o lucro, para não
+    /// aumentar o prejuízo.
     /// </summary>
     float CalcularRecompensaInvertida(int recompensaBase)
     {
-        float recompensa = -recompensaBase + dados.precoCompra;
+        float recompensa = -recompensaBase + dados.precoCompra * bonusInversor;
 
         if (recompensa > 0f)
         {
             recompensa *= StatusManager.Instance.GetMultiplicadorFortuna();
 
             if (StatusManager.Instance.TemHabilidade("buque_trevos"))
-                recompensa *= 1.5f;
+                recompensa *= 1.25f;
         }
 
         return recompensa;
@@ -1156,11 +1192,13 @@ public class PedraManager : MonoBehaviour
         if (garantirMaximo)
         {
             int maior = MaiorValorDaTabela();
-            return valorInvertido ? -maior + dados.precoCompra : maior;
+            return valorInvertido
+                ? -maior + dados.precoCompra * bonusInversor
+                : maior;
         }
 
         return valorInvertido
-            ? -resultadoSorteado + dados.precoCompra
+            ? -resultadoSorteado + dados.precoCompra * bonusInversor
             : resultadoSorteado;
     }
 

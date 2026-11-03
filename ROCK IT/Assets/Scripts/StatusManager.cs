@@ -14,15 +14,28 @@ public class StatusManager : MonoBehaviour
     private List<string> habilidadesDesbloqueadas = new List<string>();
 
     // Custo base e multiplicador por nível
-    private int custoBaseForca = 50;
-    private int custoBaseSorte = 50;
-    private int custoBaseFortuna = 100;
+    [Header("Custos iniciais")]
+    [Tooltip("Preço do primeiro upgrade de Força. O primeiro sai logo depois " +
+             "da pedra grátis do tutorial.")]
+    public int custoBaseForca = 10;
+
+    [Tooltip("Preço do primeiro upgrade de Sorte. Um pouco mais caro que Força " +
+             "porque também melhora as chances e reduz o prejuízo.")]
+    public int custoBaseSorte = 15;
+
+    [Tooltip("Preço do primeiro upgrade de Fortuna. É o status que mais mexe no " +
+             "lucro, então começa um degrau acima dos outros.")]
+    public int custoBaseFortuna = 20;
 
     [Header("Curva de custo")]
-    [Tooltip("Quanto o próximo nível custa em relação ao anterior. " +
-             "1.4 mantém os upgrades valendo a pena nos níveis altos; 1.6 " +
-             "ficava caro demais para o retorno das pedras.")]
-    public float multiplicadorCusto = 1.4f;
+    [Tooltip("Quanto o próximo nível custa em relação ao anterior. 1.65 deixa " +
+             "o começo acessível; a aceleração abaixo segura o fim do jogo.")]
+    public float multiplicadorCustoNivel = 1.65f;
+
+    [Tooltip("Aceleração do custo. A cada nível o preço cresce um pouco mais " +
+             "que o anterior, então os upgrades nunca ficam trivialmente baratos " +
+             "no fim do jogo.")]
+    public float aceleracaoCusto = 0.008f;
 
     [Tooltip("Teto do custo de um nível. Sem isso o valor estourava o limite de " +
              "número inteiro por volta do nível 39 e ficava negativo (upgrade de graça).")]
@@ -38,9 +51,9 @@ public class StatusManager : MonoBehaviour
     [Tooltip("Dano aplicado no nível 1.")]
     public float danoBase = 1f;
 
-    [Tooltip("Multiplicador de dano por nível. 1.75 acompanha a vida das pedras " +
-             "(o dano cresce no mesmo ritmo em que as pedras ficam mais duras).")]
-    public float fatorDanoPorNivel = 1.75f;
+    [Tooltip("Multiplicador de dano por nível. 1.55 mantém o dano crescendo " +
+             "sem transformar as pedras caras em um clique só.")]
+    public float fatorDanoNivel = 1.55f;
 
     [Tooltip("Teto do dano. A vida das pedras fica na casa dos milhares, então esse " +
              "limite não muda a jogabilidade — só impede o número de estourar em níveis absurdos.")]
@@ -48,7 +61,13 @@ public class StatusManager : MonoBehaviour
 
     public float GetDanoForca()
     {
-        return CalcularPotencia(danoBase, fatorDanoPorNivel, nivelForca, danoMaximo);
+        return CalcularPotencia(danoBase, fatorDanoNivel, nivelForca, danoMaximo);
+    }
+
+    /// <summary>Dano que a Força teria no nível seguinte. Usado na vitrine da loja.</summary>
+    public float GetDanoProximoNivel()
+    {
+        return CalcularPotencia(danoBase, fatorDanoNivel, nivelForca + 1, danoMaximo);
     }
 
     /// <summary>
@@ -69,10 +88,29 @@ public class StatusManager : MonoBehaviour
         return (float)System.Math.Min(valor, System.Math.Max(0.0, teto));
     }
 
+    /// <summary>
+    /// Custo do próximo nível: um multiplicador fixo por nível mais uma
+    /// aceleração que cresce com o quadrado do nível. A aceleração é o que
+    /// impede o dinheiro de crescer mais rápido que os upgrades no fim do jogo.
+    /// </summary>
+    float CalcularCusto(int baseCusto, int nivelAtual)
+    {
+        double n = Mathf.Max(0, nivelAtual - 1);
+
+        double valor = baseCusto
+            * System.Math.Pow(Mathf.Max(1.01f, multiplicadorCustoNivel), n)
+            * System.Math.Pow(1.0 + Mathf.Max(0f, aceleracaoCusto), n * n);
+
+        if (double.IsNaN(valor) || valor <= 0.0)
+            return 1f;
+
+        return Mathf.Max(1f,
+            (float)System.Math.Min(valor, System.Math.Max(0.0, custoMaximo)));
+    }
+
     public float GetCustoProximoNivelForca()
     {
-        return Mathf.Max(1f,
-            CalcularPotencia(custoBaseForca, multiplicadorCusto, nivelForca, custoMaximo));
+        return CalcularCusto(custoBaseForca, nivelForca);
     }
 
     public bool UpgradeForca()
@@ -86,19 +124,72 @@ public class StatusManager : MonoBehaviour
 
     // --- SORTE ---
     /// <summary>
-    /// Cada nível de Sorte move dois pontos percentuais dos piores resultados
-    /// (prejuízo primeiro, depois o zero) para o prêmio máximo. Com isso um
-    /// nível alto de Sorte chega a zerar a chance de perder dinheiro.
+    /// Cada nível de Sorte move 1,5 ponto percentual dos piores resultados
+    /// (prejuízo primeiro, depois o zero) para o prêmio máximo, até um teto de
+    /// 12 pontos. Além disso, o valor do prejuízo encolhe 2% por nível (no
+    /// máximo 30%). O teto é o que impede a Sorte de transformar toda pedra em
+    /// prêmio máximo nos níveis altos.
     /// </summary>
+    public const float DeslocamentoSortePorNivel = 1.5f;
+
+    /// <summary>Quanto a chance se desloca para o prêmio máximo, no total.</summary>
+    public const float DeslocamentoSorteMaximo = 12f;
+
+    /// <summary>Quanto do prejuízo original encolhe em cada nível de Sorte.</summary>
+    public const float ReducaoPerdaPorNivel = 0.02f;
+
+    /// <summary>O prejuízo nunca fica menor que 70% do valor original.</summary>
+    public const float FatorPerdaMinimo = 0.70f;
+
+    public static float DeslocamentoSorteNoNivel(int nivel)
+    {
+        return Mathf.Clamp(
+            (Mathf.Max(1, nivel) - 1) * DeslocamentoSortePorNivel,
+            0f, DeslocamentoSorteMaximo);
+    }
+
+    public static float FatorPerdaNoNivel(int nivel)
+    {
+        return Mathf.Clamp(
+            1f - ReducaoPerdaPorNivel * Mathf.Max(0, nivel - 1),
+            FatorPerdaMinimo, 1f);
+    }
+
     public float GetDeslocamentoSorte()
     {
-        return Mathf.Clamp((nivelSorte - 1) * 2f, 0f, 100f);
+        return DeslocamentoSorteNoNivel(nivelSorte);
+    }
+
+    public float GetDeslocamentoSorteProximoNivel()
+    {
+        return DeslocamentoSorteNoNivel(nivelSorte + 1);
+    }
+
+    /// <summary>Quanto o prejuízo já encolheu, em pontos percentuais.</summary>
+    public float GetReducaoPerda()
+    {
+        return (1f - FatorPerdaNoNivel(nivelSorte)) * 100f;
+    }
+
+    /// <summary>Redução de prejuízo que a Sorte teria no nível seguinte.</summary>
+    public float GetReducaoPerdaProximoNivel()
+    {
+        return (1f - FatorPerdaNoNivel(nivelSorte + 1)) * 100f;
+    }
+
+    /// <summary>
+    /// A Sorte tem dois efeitos com teto: deslocar 12 pontos de chance e
+    /// reduzir 30% do prejuízo. Depois disso, subir Sorte não muda mais nada.
+    /// </summary>
+    public bool SorteNoMaximo()
+    {
+        return DeslocamentoSorteNoNivel(nivelSorte) >= DeslocamentoSorteMaximo
+            && FatorPerdaNoNivel(nivelSorte) <= FatorPerdaMinimo + 0.0001f;
     }
 
     public float GetCustoProximoNivelSorte()
     {
-        return Mathf.Max(1f,
-            CalcularPotencia(custoBaseSorte, multiplicadorCusto, nivelSorte, custoMaximo));
+        return CalcularCusto(custoBaseSorte, nivelSorte);
     }
 
     public bool UpgradeSorte()
@@ -111,25 +202,41 @@ public class StatusManager : MonoBehaviour
     }
 
     // --- FORTUNA ---
-    [Tooltip("Multiplicador de Fortuna por nível. Fortuna multiplica apenas recompensas positivas.")]
-    public float fatorFortunaPorNivel = 1.25f;
+    [Tooltip("Quanto o lucro aumenta por nível de Fortuna. 0.08 = +8% do valor " +
+             "base por nível. O crescimento é linear, então nunca vira um " +
+             "multiplicador absurdo no fim do jogo.")]
+    public float bonusFortunaPorNivel = 0.08f;
 
-    [Tooltip("Teto do multiplicador de Fortuna. A partir daqui o valor fica fixo, " +
-             "em vez de virar infinito (o que zerava a recompensa na prática).")]
+    [Tooltip("Teto do multiplicador de Fortuna. Serve só como proteção para " +
+             "valores extremos.")]
     public float multiplicadorFortunaMaximo = 1e15f;
 
     public float GetMultiplicadorFortuna()
     {
-        float multiplicador = CalcularPotencia(
-            1f, fatorFortunaPorNivel, nivelFortuna, multiplicadorFortunaMaximo);
+        return MultiplicadorFortunaNoNivel(nivelFortuna);
+    }
 
-        return Mathf.Max(1f, multiplicador);
+    /// <summary>Multiplicador que a Fortuna teria no nível seguinte.</summary>
+    public float GetMultiplicadorFortunaProximoNivel()
+    {
+        return MultiplicadorFortunaNoNivel(nivelFortuna + 1);
+    }
+
+    float MultiplicadorFortunaNoNivel(int nivel)
+    {
+        double multiplicador = 1.0
+            + Mathf.Max(0f, bonusFortunaPorNivel) * Mathf.Max(0, nivel - 1);
+
+        double teto = Mathf.Max(1f, multiplicadorFortunaMaximo);
+
+        return (float)System.Math.Min(
+            System.Math.Max(1.0, multiplicador),
+            teto);
     }
 
     public float GetCustoProximoNivelFortuna()
     {
-        return Mathf.Max(1f,
-            CalcularPotencia(custoBaseFortuna, multiplicadorCusto, nivelFortuna, custoMaximo));
+        return CalcularCusto(custoBaseFortuna, nivelFortuna);
     }
 
     public bool UpgradeFortuna()

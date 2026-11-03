@@ -227,8 +227,8 @@ public class TabelaPremiosUI : MonoBehaviour
         {
             for (int j = i + 1; j < total; j++)
             {
-                if (dados.tabelaValores[ordem[j]].valor >
-                    dados.tabelaValores[ordem[i]].valor)
+                if (dados.ValorAjustado(ordem[j], nivelSorteExibido) >
+                    dados.ValorAjustado(ordem[i], nivelSorteExibido))
                 {
                     int troca = ordem[i];
                     ordem[i] = ordem[j];
@@ -237,7 +237,7 @@ public class TabelaPremiosUI : MonoBehaviour
             }
         }
 
-        int maiorValor = dados.tabelaValores[ordem[0]].valor;
+        int maiorValor = dados.ValorAjustado(ordem[0], nivelSorteExibido);
 
         // Sorte alta pode zerar resultados ruins. Linha com 0% só ocuparia
         // espaço e passaria a ideia de que aquele prêmio ainda é possível.
@@ -337,7 +337,7 @@ public class TabelaPremiosUI : MonoBehaviour
         for (int i = 0; i < total; i++)
         {
             int indice = ordem[i];
-            int valor = dados.tabelaValores[indice].valor;
+            int valor = dados.ValorAjustado(indice, nivelSorteExibido);
             float chance = chances[indice];
             bool ehMaximo = valor > 0 && valor == maiorValor;
 

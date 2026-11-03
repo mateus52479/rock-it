@@ -61,7 +61,7 @@
     {
       "id": "tour_status",
       "personagem": "Pedrinha",
-      "texto": "Na aba Status você sobe Força (dano), Sorte (chance do prêmio alto) e Fortuna (multiplica o lucro).",
+      "texto": "Na aba Status você sobe Força (dano), Sorte (melhora as chances e reduz o prejuízo) e Fortuna (aumenta o lucro).",
       "npcX": 600,
       "npcY": -380,
       "abrirLoja": true,
@@ -72,7 +72,7 @@
     {
       "id": "tour_habilidades",
       "personagem": "Pedrinha",
-      "texto": "Nas Habilidades você compra bônus permanentes. Custam caro, mas mudam o jogo de verdade.",
+      "texto": "Nas Habilidades você compra bônus permanentes. Custam mais que os status, mas mudam o jogo de verdade.",
       "npcX": 600,
       "npcY": -380,
       "painel": "habilidades",

@@ -16,35 +16,35 @@ public class MaquinaDatabase : MonoBehaviour
                 id        = "lixo",
                 nome      = "Lixo",
                 descricao = "Arraste uma pedra até aqui para descartá-la.",
-                preco     = 100,
+                preco     = 50,
                 idUpgrade = "lixo_luxo"
             },
             new MaquinaDados {
                 id        = "lixo_luxo",
                 nome      = "Lixo de Luxo",
                 descricao = "Ao descartar uma pedra receba 25% do valor de compra dela.",
-                preco     = 1200,
+                preco     = 400,
                 idUpgrade = ""
             },
             new MaquinaDados {
                 id        = "scanner",
                 nome      = "Scanner",
                 descricao = "Todas as pedras ganham contorno verde (positivo) ou vermelho (negativo).",
-                preco     = 2500,
+                preco     = 900,
                 idUpgrade = ""
             },
             new MaquinaDados {
                 id        = "quebrador",
                 nome      = "Quebrador Automático",
                 descricao = "Coloque uma pedra aqui. Ela será quebrada automaticamente a 20% do seu dano por segundo.",
-                preco     = 6000,
+                preco     = 2500,
                 idUpgrade = ""
             },
             new MaquinaDados {
                 id        = "inversor",
                 nome      = "Inversor de Polaridade",
-                descricao = "Inverte o valor da pedra e devolve o preço pago. Na média fica justo: ganha na maioria das vezes, mas o prêmio de 18x vira um prejuízo enorme.",
-                preco     = 15000,
+                descricao = "Inverte o valor da pedra e devolve o preço pago com 25% de bônus. Na média fica justo: ganha na maioria das vezes, mas o prêmio máximo vira um prejuízo enorme.",
+                preco     = 7000,
                 idUpgrade = ""
             },
             new MaquinaDados {

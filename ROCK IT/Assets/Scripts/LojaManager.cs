@@ -130,20 +130,20 @@ public class LojaManager : MonoBehaviour
         // A primeira Pedra Comum é gratuita, e a de socorro também.
         int preco = (primeiraComum || socorro) ? 0 : pedra.precoCompra;
 
-        // Desconto Universitário: reduz o preço em 25%.
+        // Desconto Universitário: reduz o preço em 15%.
         if (!primeiraComum && !socorro &&
             StatusManager.Instance.TemHabilidade("desconto_universitario"))
         {
-            preco = Mathf.RoundToInt(preco * 0.75f);
+            preco = Mathf.RoundToInt(preco * 0.85f);
         }
 
-        // Cashback: 50% de chance de tornar a compra gratuita.
+        // Cashback: 25% de chance de tornar a compra gratuita.
         bool gratis = gratisForcado || socorro;
 
         if (!primeiraComum && !socorro &&
             StatusManager.Instance.TemHabilidade("cashback"))
         {
-            if (Random.value < 0.5f)
+            if (Random.value < 0.25f)
                 gratis = true;
         }
 

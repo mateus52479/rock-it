@@ -55,17 +55,39 @@ public class PedraDados
         {
             acumulado += chances[i];
             if (roll < acumulado)
-                return tabelaValores[i].valor;
+                return ValorAjustado(i, nivelSorte);
         }
 
-        return tabelaValores[tabelaValores.Length - 1].valor;
+        return ValorAjustado(tabelaValores.Length - 1, nivelSorte);
     }
 
     /// <summary>
-    /// Chances com o deslocamento de Sorte já aplicado. Cada nível tira dois
-    /// pontos percentuais dos piores resultados (prejuízo primeiro, depois o
-    /// zero) e joga tudo no prêmio máximo. Assim, Sorte alta realmente tira o
-    /// prejuízo do caminho, em vez de só melhorar um pouco a pior chance.
+    /// Valor que a linha da tabela paga já com a Sorte aplicada. Os prêmios
+    /// positivos não mudam; o prejuízo encolhe 2% por nível (no máximo 30%).
+    /// Assim o jogador vê a Sorte mexer nos números logo no primeiro upgrade,
+    /// sem zerar o risco no fim do jogo.
+    /// </summary>
+    public int ValorAjustado(int indice, int nivelSorte)
+    {
+        if (tabelaValores == null ||
+            indice < 0 || indice >= tabelaValores.Length)
+            return 0;
+
+        int valor = tabelaValores[indice].valor;
+
+        if (valor >= 0)
+            return valor;
+
+        // Ceil em número negativo arredonda em direção ao zero: -4,75 vira -4.
+        return Mathf.CeilToInt(
+            valor * StatusManager.FatorPerdaNoNivel(nivelSorte));
+    }
+
+    /// <summary>
+    /// Chances com o deslocamento de Sorte já aplicado. Cada nível tira 1,5
+    /// ponto percentual dos piores resultados (prejuízo primeiro, depois o
+    /// zero) e joga tudo no prêmio máximo, até o teto de 12 pontos. Assim a
+    /// Sorte melhora as chances sem transformar toda pedra em prêmio máximo.
     /// </summary>
     public float[] ObterChancesAjustadas(int nivelSorte)
     {
@@ -89,7 +111,7 @@ public class PedraDados
                 disponivel += chances[i];
 
         float ajuste = Mathf.Min(
-            Mathf.Max(0, (nivelSorte - 1) * 2f),
+            StatusManager.DeslocamentoSorteNoNivel(nivelSorte),
             disponivel
         );
 
@@ -134,7 +156,7 @@ public class PedraDados
 
         for (int i = 0; i < tabelaValores.Length; i++)
         {
-            float valor = tabelaValores[i].valor;
+            float valor = ValorAjustado(i, nivelSorte);
 
             if (valor > 0f)
                 valor *= multiplicadorFortuna;

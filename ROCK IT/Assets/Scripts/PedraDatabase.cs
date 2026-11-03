@@ -26,10 +26,10 @@ public class PedraDatabase : MonoBehaviour
                 vidaMaxima = 12,
                 tabelaValores = new ValorPedra[]
                 {
-                    new ValorPedra { valor = -5, chance = 10f },
-                    new ValorPedra { valor = 0, chance = 15f },
-                    new ValorPedra { valor = 5, chance = 40f },
-                    new ValorPedra { valor = 1000000000, chance = 35f },
+                    new ValorPedra { valor = -1, chance = 25f },
+                    new ValorPedra { valor = 0,  chance = 20f },
+                    new ValorPedra { valor = 2,  chance = 45f },
+                    new ValorPedra { valor = 10, chance = 10f },
                 }
             },
             new PedraDados {
@@ -85,7 +85,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Brilha como estrela. Raramente.",
                 cor = new Color(0.7f, 0.95f, 1f),
                 precoCompra = 448,
-                vidaMaxima = 1536,
+                vidaMaxima = 1537,
                 tabelaValores = TabelaPadrao(448),
             },
             new PedraDados {
@@ -93,7 +93,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Metal precioso e raro. Muito difícil de lucrar.",
                 cor = new Color(0.6f, 0.75f, 0.8f),
                 precoCompra = 1340,
-                vidaMaxima = 3072,
+                vidaMaxima = 4596,
                 tabelaValores = TabelaArriscada(1340),
             },
             new PedraDados {
@@ -101,7 +101,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Formada em temperaturas extremas. Perigosa.",
                 cor = new Color(0.5f, 0.85f, 1f),
                 precoCompra = 3360,
-                vidaMaxima = 6144,
+                vidaMaxima = 11525,
                 tabelaValores = TabelaArriscada(3360),
             },
             new PedraDados {
@@ -109,7 +109,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Vinda das profundezas. Extremamente arriscada.",
                 cor = new Color(0.9f, 0.2f, 0.05f),
                 precoCompra = 8400,
-                vidaMaxima = 12288,
+                vidaMaxima = 28812,
                 tabelaValores = TabelaArriscada(8400),
             },
             new PedraDados {
@@ -117,7 +117,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Veio do espaço. Ninguém sabe o que tem dentro.",
                 cor = new Color(0.3f, 0.3f, 0.35f),
                 precoCompra = 21000,
-                vidaMaxima = 24576,
+                vidaMaxima = 72030,
                 tabelaValores = TabelaArriscada(21000),
             },
             new PedraDados {
@@ -125,7 +125,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Trazida de satélites distantes. Raramente lucrativa.",
                 cor = new Color(0.9f, 0.9f, 0.95f),
                 precoCompra = 52500,
-                vidaMaxima = 49152,
+                vidaMaxima = 180075,
                 tabelaValores = TabelaArriscada(52500),
             },
             new PedraDados {
@@ -135,7 +135,7 @@ public class PedraDatabase : MonoBehaviour
                 descricao = "Impossível de existir. E ainda assim, aqui está.",
                 cor = new Color(1f, 0.9f, 0.2f),
                 precoCompra = 200000,
-                vidaMaxima = 98304,
+                vidaMaxima = 686000,
                 tabelaValores = TabelaArriscada(200000),
             },
         };
@@ -151,32 +151,34 @@ public class PedraDatabase : MonoBehaviour
     /// <summary>
     /// Perfil de risco das pedras normais. Os valores são múltiplos do preço
     /// de compra, então a economia se mantém igual em qualquer faixa.
-    /// Metade das vezes você perde a compra e parte do troco; 25% não ganha
-    /// nada; 20% dobra o dinheiro; 5% paga 18x. Média: o valor da compra.
+    /// A média fica 22,5% acima do preço: comprar pedra é a renda de base do
+    /// jogo, e é ela que paga os upgrades. A Sorte e a Fortuna aumentam essa
+    /// margem depois, mas com teto.
     /// </summary>
     private static ValorPedra[] TabelaPadrao(int preco)
     {
         return new ValorPedra[]
         {
-            new ValorPedra { valor = Mathf.RoundToInt(-0.6f * preco), chance = 50f },
-            new ValorPedra { valor = 0,                               chance = 25f },
-            new ValorPedra { valor = Mathf.RoundToInt( 2.0f * preco), chance = 20f },
-            new ValorPedra { valor = Mathf.RoundToInt(18.0f * preco), chance = 5f  },
+            new ValorPedra { valor = Mathf.RoundToInt(-0.5f * preco), chance = 45f },
+            new ValorPedra { valor = 0,                               chance = 20f },
+            new ValorPedra { valor = Mathf.RoundToInt( 3.5f * preco), chance = 30f },
+            new ValorPedra { valor = Mathf.RoundToInt( 8.0f * preco), chance = 5f  },
         };
     }
 
     /// <summary>
     /// Perfil das pedras mais caras: perde mais vezes e perde mais, mas o
-    /// prêmio raro é maior. Média 4% abaixo do preço, com bem mais variância.
+    /// prêmio raro é maior. A média fica 35% acima do preço — um pouco melhor
+    /// que a tabela normal, para compensar o risco maior.
     /// </summary>
     private static ValorPedra[] TabelaArriscada(int preco)
     {
         return new ValorPedra[]
         {
-            new ValorPedra { valor = Mathf.RoundToInt(-0.8f * preco), chance = 55f },
-            new ValorPedra { valor = 0,                               chance = 22f },
-            new ValorPedra { valor = Mathf.RoundToInt( 2.5f * preco), chance = 18f },
-            new ValorPedra { valor = Mathf.RoundToInt(19.0f * preco), chance = 5f  },
+            new ValorPedra { valor = Mathf.RoundToInt(-0.7f * preco), chance = 50f },
+            new ValorPedra { valor = 0,                               chance = 15f },
+            new ValorPedra { valor = Mathf.RoundToInt( 4.0f * preco), chance = 30f },
+            new ValorPedra { valor = Mathf.RoundToInt(10.0f * preco), chance = 5f  },
         };
     }
 

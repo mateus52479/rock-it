@@ -4,15 +4,22 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Escurece o fundo enquanto uma pedra está ampliada para ser quebrada e
-/// mostra um botão X para sair desse modo. O escurecimento fica atrás da
-/// interface do jogo (tabela de prêmios e HUD continuam visíveis) e o botão
-/// desce para trás dos menus quando pause ou configurações abrem.
+/// Escurece o cenário enquanto uma pedra está ampliada para ser quebrada e
+/// mostra um botão X para sair desse modo.
+///
+/// O escurecimento é um sprite no mundo, e não uma camada da interface. Assim
+/// ele cobre a mesa e as outras pedras, mas fica atrás da pedra em foco (que
+/// sobe para a ordem de desenho dela): a pedra que está sendo quebrada
+/// permanece clara. A interface do jogo continua acima de tudo.
 /// </summary>
 public class PedraFocoUI : MonoBehaviour
 {
-    /// <summary>Atrás da tabela de prêmios (-1) e de toda a interface do jogo (0).</summary>
-    private const int OrdemFundo = -2;
+    /// <summary>
+    /// Logo abaixo da pedra em foco (10 + 50) e acima das pedras na mesa e das
+    /// máquinas. A pedra em foco fica fora do escurecimento; todo o resto do
+    /// mundo fica dentro dele.
+    /// </summary>
+    private const int OrdemEscurecimento = 55;
 
     /// <summary>Acima do HUD, mas abaixo do tutorial (300) e do jackpot (350).</summary>
     private const int OrdemBotao = 250;
@@ -23,11 +30,14 @@ public class PedraFocoUI : MonoBehaviour
     private const float AlphaFundo = 0.5f;
     private const float DuracaoFade = 0.25f;
 
+    /// <summary>Folga para o escurecimento passar das bordas da câmera.</summary>
+    private const float FolgaFundo = 1.15f;
+
     private static PedraFocoUI instancia;
 
-    private Canvas canvasFundo;
     private Canvas canvasBotao;
-    private Image fundo;
+    private SpriteRenderer fundo;
+    private Camera cameraJogo;
     private CanvasGroup grupoBotao;
     private Coroutine rotinaFade;
     private PedraManager pedraAtual;
@@ -76,20 +86,19 @@ public class PedraFocoUI : MonoBehaviour
 
     void Construir()
     {
-        canvasFundo = UIUtil.CriarCanvas("PedraFocoFundo", OrdemFundo)
-            .GetComponent<Canvas>();
+        GameObject fundoGO = new GameObject("PedraFocoEscurecimento");
 
-        fundo = UIUtil.CriarImagem(
-            canvasFundo.transform,
-            "Escurecimento",
-            new Color(0f, 0f, 0f, 0f),
-            Vector2.zero,
-            Vector2.zero);
+        fundoGO.transform.SetParent(transform, false);
 
-        UIUtil.Esticar((RectTransform)fundo.transform);
+        fundo = fundoGO.AddComponent<SpriteRenderer>();
+        fundo.sprite = TemaUI.SpriteQuadrado();
+        fundo.color = new Color(0f, 0f, 0f, 0f);
+        fundo.sortingLayerName = "Default";
+        fundo.sortingOrder = OrdemEscurecimento;
 
-        // O escurecimento não pode bloquear o clique na pedra.
-        fundo.raycastTarget = false;
+        cameraJogo = Camera.main;
+
+        AjustarFundoACamera();
 
         canvasBotao = UIUtil.CriarCanvas("PedraFocoBotoes", OrdemBotao)
             .GetComponent<Canvas>();
@@ -124,6 +133,42 @@ public class PedraFocoUI : MonoBehaviour
         }
 
         canvasBotao.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Estica o escurecimento para cobrir a tela toda. Fica no plano do cenário
+    /// (z = 0), então a pedra em foco, com ordem de desenho maior, aparece por
+    /// cima dele.
+    /// </summary>
+    void AjustarFundoACamera()
+    {
+        if (fundo == null || cameraJogo == null)
+            return;
+
+        // O sprite é um quadrado de 4 px a 100 px por unidade: 0,04 unidades.
+        const float tamanhoSprite = 4f / 100f;
+
+        float altura = cameraJogo.orthographicSize * 2f * FolgaFundo;
+        float largura = altura * cameraJogo.aspect;
+
+        Transform t = fundo.transform;
+        t.position = new Vector3(
+            cameraJogo.transform.position.x,
+            cameraJogo.transform.position.y,
+            0f);
+        t.rotation = Quaternion.identity;
+        t.localScale = new Vector3(
+            largura / tamanhoSprite,
+            altura / tamanhoSprite,
+            1f);
+    }
+
+    void LateUpdate()
+    {
+        if (cameraJogo == null)
+            cameraJogo = Camera.main;
+
+        AjustarFundoACamera();
     }
 
     void Apresentar(PedraManager pedra)
@@ -212,8 +257,8 @@ public class PedraFocoUI : MonoBehaviour
         if (instancia == this)
             instancia = null;
 
-        if (canvasFundo != null)
-            Destroy(canvasFundo.gameObject);
+        if (fundo != null)
+            Destroy(fundo.gameObject);
 
         if (canvasBotao != null)
             Destroy(canvasBotao.gameObject);

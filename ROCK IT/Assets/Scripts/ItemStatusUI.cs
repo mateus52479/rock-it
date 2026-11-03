@@ -121,28 +121,37 @@ public class ItemStatusUI : MonoBehaviour
             case 0:
                 textoNome.text = Traducao.T("Força");
                 textoNivel.text = Traducao.TF(
-                    "Nível {0}\nDano: {1}",
+                    "Nível {0}\nDano: {1} para {2}",
                     StatusManager.Instance.nivelForca,
-                    NumeroUtil.Formatar(StatusManager.Instance.GetDanoForca(), 1));
+                    NumeroUtil.Formatar(StatusManager.Instance.GetDanoForca(), 1),
+                    NumeroUtil.Formatar(StatusManager.Instance.GetDanoProximoNivel(), 1));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelForca());
                 break;
             case 1:
                 textoNome.text = Traducao.T("Sorte");
                 textoNivel.text = Traducao.TF(
-                    "Nível {0}\nChance máx.: +{1}%",
+                    "Nível {0}\nSorte: +{1}% para +{2}%",
                     StatusManager.Instance.nivelSorte,
-                    NumeroUtil.Formatar(StatusManager.Instance.GetDeslocamentoSorte(), 0));
+                    FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorte()),
+                    FormatarPorcentagem(StatusManager.Instance.GetDeslocamentoSorteProximoNivel()));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelSorte());
                 break;
             case 2:
                 textoNome.text = Traducao.T("Fortuna");
                 textoNivel.text = Traducao.TF(
-                    "Nível {0}\nMultiplicador: x{1}",
+                    "Nível {0}\nLucro: x{1} para x{2}",
                     StatusManager.Instance.nivelFortuna,
-                    NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortuna(), 1));
+                    NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortuna(), 2),
+                    NumeroUtil.Formatar(StatusManager.Instance.GetMultiplicadorFortunaProximoNivel(), 2));
                 AtualizarCorCusto(StatusManager.Instance.GetCustoProximoNivelFortuna());
                 break;
         }
+    }
+
+    /// <summary>Porcentagem curta: 2,5% / 5% / 12,5%.</summary>
+    static string FormatarPorcentagem(float valor)
+    {
+        return (Mathf.Round(valor * 10f) / 10f).ToString("0.#");
     }
 
     void AtualizarCorCusto(float custo)
