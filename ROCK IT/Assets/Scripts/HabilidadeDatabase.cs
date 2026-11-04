@@ -83,6 +83,24 @@ public class HabilidadeDatabase : MonoBehaviour
                 requisitoIds = new string[] { "hab_inicio" },
                 tipo         = TipoHabilidade.Geral,
                 valorBonus   = 0
+            },
+            new HabilidadeDados {
+                id           = "bomba",
+                nome         = "Bomba",
+                descricao    = "O dano crítico passa a ser 4x o dano padrão.",
+                custo        = 400,
+                requisitoIds = new string[] { "whey_protein" },
+                tipo         = TipoHabilidade.Forca,
+                valorBonus   = 0
+            },
+            new HabilidadeDados {
+                id           = "fermentacao",
+                nome         = "Fermentação",
+                descricao    = "Quanto mais tempo a pedra fica na mesa, mais ela vale: +0,2x a cada minuto.",
+                custo        = 300,
+                requisitoIds = new string[] { "hab_inicio" },
+                tipo         = TipoHabilidade.Fortuna,
+                valorBonus   = 0
             }
         };
     }

@@ -150,6 +150,10 @@
     { "pt": "5% de chance de receber o prêmio máximo de qualquer pedra.", "en": "5% chance to get the top prize from any stone." },
     { "pt": "Engenheiro", "en": "Engineer" },
     { "pt": "Todas as máquinas na mesa trabalham 25% mais rápido.", "en": "Every machine on the table works 25% faster." },
+    { "pt": "Bomba", "en": "Bomb" },
+    { "pt": "O dano crítico passa a ser 4x o dano padrão.", "en": "Critical damage becomes 4x normal damage." },
+    { "pt": "Fermentação", "en": "Fermentation" },
+    { "pt": "Quanto mais tempo a pedra fica na mesa, mais ela vale: +0,2x a cada minuto.", "en": "The longer a stone stays on the table, the more it's worth: +0.2x per minute." },
 
     { "pt": "Pedrinha", "en": "Pebble" },
     { "pt": "E aí! Primeira vez na mina? Quer que eu te explique como ganhar dinheiro aqui?", "en": "Hey! First time in the mine? Want me to explain how to make money here?" },

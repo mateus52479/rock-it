@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -89,6 +90,27 @@ public class PedraManager : MonoBehaviour
              "tabelas de pedra.")]
     public float bonusInversor = 1.25f;
 
+    [Header("Habilidades")]
+    [Tooltip("Multiplicador do dano crítico sem a habilidade Bomba.")]
+    public float multiplicadorCriticoBase = 2f;
+
+    [Tooltip("Multiplicador do dano crítico com a habilidade Bomba.")]
+    public float multiplicadorCriticoBomba = 4f;
+
+    [Tooltip("Quanto o valor da pedra cresce por minuto na mesa com a " +
+             "habilidade Fermentação. 0.2 = +0.2x a cada minuto.")]
+    public float bonusFermentacaoPorMinuto = 0.2f;
+
+    // Tempo acumulado na mesa com a Fermentação ativa. O multiplicador é
+    // contínuo: a cada 30 segundos ele sobe 0.1x.
+    private float tempoFermentacao;
+    private float multiplicadorFermentacaoExibido = -1f;
+    private GameObject seloFermentacao;
+    private SpriteRenderer bordaFermentacao;
+    private SpriteRenderer fundoFermentacao;
+    private TextMeshPro textoFermentacao;
+    private static Sprite spriteQuadradoBranco;
+
     // Estado do modo de quebra: a pedra ampliada não pode ser arrastada nem
     // empurrada pelas outras pedras enquanto está no centro da tela.
     private bool viajandoParaFoco = false;
@@ -176,6 +198,30 @@ public class PedraManager : MonoBehaviour
                 contornoScanner.sortingLayerID = spriteRenderer.sortingLayerID;
 
             contornoScanner.sortingOrder = ordem;
+        }
+
+        if (bordaFermentacao != null)
+        {
+            if (spriteRenderer != null)
+                bordaFermentacao.sortingLayerID = spriteRenderer.sortingLayerID;
+
+            bordaFermentacao.sortingOrder = ordem + 1;
+        }
+
+        if (fundoFermentacao != null)
+        {
+            if (spriteRenderer != null)
+                fundoFermentacao.sortingLayerID = spriteRenderer.sortingLayerID;
+
+            fundoFermentacao.sortingOrder = ordem + 2;
+        }
+
+        if (textoFermentacao != null)
+        {
+            if (spriteRenderer != null)
+                textoFermentacao.sortingLayerID = spriteRenderer.sortingLayerID;
+
+            textoFermentacao.sortingOrder = ordem + 3;
         }
 
         if (vidaText == null) return;
@@ -400,6 +446,9 @@ public class PedraManager : MonoBehaviour
         proximoTrocaDeFrame = Time.time + IntervaloDeFrame();
 
         AplicarEscalaEColisor();
+
+        if (seloFermentacao != null)
+            PosicionarSeloFermentacao();
     }
 
     /// <summary>
@@ -457,6 +506,164 @@ public class PedraManager : MonoBehaviour
         proximoTrocaDeFrame = Time.time + IntervaloDeFrame();
         frameAtual = 1 - frameAtual;
         spriteRenderer.sprite = frameAtual == 0 ? parAtual[0] : parAtual[1];
+    }
+
+    /// <summary>
+    /// Fermentação: enquanto a pedra está na mesa (e o jogador tem a
+    /// habilidade), o valor dela cresce 0,2x por minuto. O selo vermelho no
+    /// canto superior direito mostra o multiplicador atual.
+    /// </summary>
+    void AtualizarFermentacao()
+    {
+        bool ativa = StatusManager.Instance != null
+            && StatusManager.Instance.TemHabilidade("fermentacao")
+            && !sendoDestruida;
+
+        if (!ativa)
+        {
+            if (seloFermentacao != null && seloFermentacao.activeSelf)
+                seloFermentacao.SetActive(false);
+
+            return;
+        }
+
+        if (!visualEscondido)
+            tempoFermentacao += Time.deltaTime;
+
+        if (seloFermentacao == null)
+            CriarSeloFermentacao();
+
+        if (seloFermentacao == null)
+            return;
+
+        if (!seloFermentacao.activeSelf)
+            seloFermentacao.SetActive(!visualEscondido);
+
+        if (visualEscondido)
+            return;
+
+        float exibido = Mathf.Floor(GetMultiplicadorFermentacao() * 10f) / 10f;
+
+        if (Mathf.Abs(exibido - multiplicadorFermentacaoExibido) < 0.001f)
+            return;
+
+        multiplicadorFermentacaoExibido = exibido;
+
+        if (textoFermentacao != null)
+        {
+            textoFermentacao.text = Mathf.Approximately(exibido, Mathf.Round(exibido))
+                ? Mathf.RoundToInt(exibido).ToString(CultureInfo.InvariantCulture) + "x"
+                : exibido.ToString("0.0", CultureInfo.InvariantCulture) + "x";
+        }
+    }
+
+    /// <summary>Multiplicador de valor que a Fermentação já rendeu.</summary>
+    public float GetMultiplicadorFermentacao()
+    {
+        return 1f + Mathf.Max(0f, bonusFermentacaoPorMinuto) * (tempoFermentacao / 60f);
+    }
+
+    void CriarSeloFermentacao()
+    {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
+        Sprite referencia = parAtual[0] != null ? parAtual[0] : spriteRenderer != null
+            ? spriteRenderer.sprite
+            : null;
+
+        if (referencia == null)
+            return;
+
+        seloFermentacao = new GameObject("Fermentacao");
+        seloFermentacao.transform.SetParent(transform, false);
+
+        GameObject objBorda = new GameObject("Borda");
+        objBorda.transform.SetParent(seloFermentacao.transform, false);
+
+        bordaFermentacao = objBorda.AddComponent<SpriteRenderer>();
+        bordaFermentacao.sprite = SpriteQuadradoBranco();
+        bordaFermentacao.color = TemaUI.Contorno;
+
+        GameObject objFundo = new GameObject("Fundo");
+        objFundo.transform.SetParent(seloFermentacao.transform, false);
+
+        fundoFermentacao = objFundo.AddComponent<SpriteRenderer>();
+        fundoFermentacao.sprite = SpriteQuadradoBranco();
+        fundoFermentacao.color = new Color(0.82f, 0.12f, 0.12f, 1f);
+
+        GameObject objTexto = new GameObject("Texto");
+        objTexto.transform.SetParent(seloFermentacao.transform, false);
+
+        textoFermentacao = objTexto.AddComponent<TextMeshPro>();
+        textoFermentacao.alignment = TextAlignmentOptions.Center;
+        textoFermentacao.color = Color.white;
+        textoFermentacao.enableAutoSizing = false;
+        textoFermentacao.fontSize = 6.3f;
+        textoFermentacao.text = "1x";
+        textoFermentacao.textWrappingMode = TextWrappingModes.NoWrap;
+        textoFermentacao.overflowMode = TextOverflowModes.Overflow;
+        textoFermentacao.margin = Vector4.zero;
+        textoFermentacao.rectTransform.localPosition = Vector3.zero;
+
+        if (vidaText != null)
+        {
+            textoFermentacao.font = vidaText.font;
+            textoFermentacao.fontSharedMaterial = vidaText.fontSharedMaterial;
+        }
+
+        PosicionarSeloFermentacao();
+        AplicarOrdemDeDesenho(spriteRenderer.sortingOrder);
+    }
+
+    /// <summary>
+    /// Encosta o selo no canto superior direito da área desenhada do sprite
+    /// atual. Roda de novo quando a pedra muda de sprite ao levar dano.
+    /// </summary>
+    void PosicionarSeloFermentacao()
+    {
+        if (seloFermentacao == null || spriteRenderer == null || spriteRenderer.sprite == null)
+            return;
+
+        Bounds visivel = SpriteUtil.ObterBoundsVisiveis(spriteRenderer.sprite);
+
+        // 30% menor que a versão anterior, mas ainda legível.
+        float largura = Mathf.Max(0.25f, visivel.size.x * 0.252f);
+        float altura = Mathf.Max(0.18f, visivel.size.y * 0.182f);
+
+        seloFermentacao.transform.localPosition = new Vector3(
+            visivel.max.x - largura * 0.5f,
+            visivel.max.y - altura * 0.5f,
+            0f
+        );
+
+        if (fundoFermentacao != null)
+            fundoFermentacao.transform.localScale = new Vector3(largura, altura, 1f);
+
+        if (bordaFermentacao != null)
+            bordaFermentacao.transform.localScale = new Vector3(largura + 0.112f, altura + 0.112f, 1f);
+
+        if (textoFermentacao != null)
+        {
+            textoFermentacao.rectTransform.sizeDelta = new Vector2(largura, altura);
+            textoFermentacao.rectTransform.localPosition = Vector3.zero;
+        }
+    }
+
+    static Sprite SpriteQuadradoBranco()
+    {
+        if (spriteQuadradoBranco == null)
+        {
+            Texture2D textura = Texture2D.whiteTexture;
+            spriteQuadradoBranco = Sprite.Create(
+                textura,
+                new Rect(0f, 0f, textura.width, textura.height),
+                new Vector2(0.5f, 0.5f),
+                textura.width
+            );
+        }
+
+        return spriteQuadradoBranco;
     }
 
     void OnMouseDown()
@@ -562,6 +769,7 @@ public class PedraManager : MonoBehaviour
     void Update()
     {
         AtualizarAnimacao();
+        AtualizarFermentacao();
 
         // Se outra pedra nascer enquanto esta está em foco (por exemplo, uma
         // compra feita com a loja aberta), ela também precisa ser ignorada.
@@ -882,7 +1090,10 @@ public class PedraManager : MonoBehaviour
 
         float chanceCritico = StatusManager.Instance.TemHabilidade("whey_protein") ? 0.3f : 0.05f;
         bool critico = Random.value < chanceCritico;
-        float danoFlutuante = critico ? danoBaseFlutuante * 2f : danoBaseFlutuante;
+        float multiplicadorCritico = StatusManager.Instance.TemHabilidade("bomba")
+            ? multiplicadorCriticoBomba
+            : multiplicadorCriticoBase;
+        float danoFlutuante = critico ? danoBaseFlutuante * multiplicadorCritico : danoBaseFlutuante;
 
         // Converte com teto: Mathf.RoundToInt sem limite estourava em níveis
         // altos de Força e o dano voltava para 1.
@@ -1069,9 +1280,11 @@ public class PedraManager : MonoBehaviour
         {
             ultimoResultadoFoiJackpot = maiorValor > 0 && !valorInvertido;
 
-            return valorInvertido
+            float garantido = valorInvertido
                 ? -maiorValor + dados.precoCompra * bonusInversor
                 : maiorValor;
+
+            return AplicarFermentacao(garantido);
         }
 
         // Usa o resultado sorteado quando a pedra apareceu. É o mesmo que o
@@ -1103,7 +1316,7 @@ public class PedraManager : MonoBehaviour
         if (StatusManager.Instance.TemHabilidade("buque_trevos"))
             recompensa *= 1.25f;
 
-        return recompensa;
+        return AplicarFermentacao(recompensa);
     }
 
     /// <summary>
@@ -1122,6 +1335,21 @@ public class PedraManager : MonoBehaviour
 
             if (StatusManager.Instance.TemHabilidade("buque_trevos"))
                 recompensa *= 1.25f;
+        }
+
+        return AplicarFermentacao(recompensa);
+    }
+
+    /// <summary>
+    /// Fermentação só aumenta o que a pedra paga. Prejuízo continua igual.
+    /// </summary>
+    float AplicarFermentacao(float recompensa)
+    {
+        if (recompensa > 0f &&
+            StatusManager.Instance != null &&
+            StatusManager.Instance.TemHabilidade("fermentacao"))
+        {
+            recompensa *= GetMultiplicadorFermentacao();
         }
 
         return recompensa;
@@ -1176,6 +1404,9 @@ public class PedraManager : MonoBehaviour
 
         if (colisor != null)
             colisor.enabled = false;
+
+        if (seloFermentacao != null)
+            seloFermentacao.SetActive(false);
     }
 
     /// <summary>Devolve o desenho e o collider depois que a máquina terminou.</summary>
@@ -1197,6 +1428,13 @@ public class PedraManager : MonoBehaviour
 
         if (contornoScanner != null && contornoScannerEstavaAtivo)
             AtualizarContornoScanner(true);
+
+        if (seloFermentacao != null &&
+            StatusManager.Instance != null &&
+            StatusManager.Instance.TemHabilidade("fermentacao"))
+        {
+            seloFermentacao.SetActive(true);
+        }
     }
 
     public void BloquearInteracao(bool bloquear)

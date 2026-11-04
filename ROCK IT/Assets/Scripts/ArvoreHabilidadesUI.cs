@@ -35,6 +35,8 @@ public class ArvoreHabilidadesUI : MonoBehaviour, IPointerEnterHandler, IPointer
     { "buque_trevos",            new Vector2( 150,  320) },
     { "analista_profissional",   new Vector2( 350,  150) },
     { "engenheiro",              new Vector2(   0, -180) },
+    { "bomba",                   new Vector2(-100,  370) },
+    { "fermentacao",             new Vector2( 200, -200) },
 };
 
     void OnEnable()
