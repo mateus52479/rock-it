@@ -329,7 +329,7 @@ public class SaveManager : MonoBehaviour
         // caso o jogo seja fechado antes do autosave.
         Salvar();
 
-        Debug.Log("Primeira Pedra Comum registrada no save.");
+        Debug.Log("Primeiro Carvão registrado no save.");
     }
 
     public void Carregar()

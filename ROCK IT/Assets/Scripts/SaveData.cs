@@ -31,6 +31,6 @@ public class SaveData
 
     public List<string> maquinasCompradas = new List<string>();
 
-    // Registra se a primeira Pedra Comum já foi comprada.
+    // Registra se o primeiro Carvão já foi comprado.
     public bool primeiraComumComprada = false;
 }

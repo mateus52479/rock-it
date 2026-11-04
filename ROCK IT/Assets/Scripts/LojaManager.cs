@@ -114,9 +114,9 @@ public class LojaManager : MonoBehaviour
             return;
         }
 
-        // Verifica se esta é a primeira compra da Pedra Comum.
+        // Verifica se esta é a primeira compra do Carvão.
         bool primeiraComum =
-            pedra.nome == "Pedra Comum" &&
+            pedra.nome == "Carvão" &&
             !SaveManager.Instance.PrimeiraComumComprada();
 
         // Pedra de socorro: o jogador está sem dinheiro e sem pedras na
@@ -127,7 +127,7 @@ public class LojaManager : MonoBehaviour
             pedra == PedraMaisBarata() &&
             CalcularSemSaida();
 
-        // A primeira Pedra Comum é gratuita, e a de socorro também.
+        // A primeira pedra (Carvão) é gratuita, e a de socorro também.
         int preco = (primeiraComum || socorro) ? 0 : pedra.precoCompra;
 
         // Desconto Universitário: reduz o preço em 15%.

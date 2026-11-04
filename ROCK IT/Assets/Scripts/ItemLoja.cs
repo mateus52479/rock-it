@@ -184,9 +184,9 @@ public class ItemLoja : MonoBehaviour
     {
         if (dados == null || textoPreco == null) return;
 
-        // A primeira Pedra Comum é grátis e garantida com o prêmio máximo.
+        // O primeiro Carvão é grátis e garantido com o prêmio máximo.
         bool primeiraGratis =
-            dados.nome == "Pedra Comum" &&
+            dados.nome == "Carvão" &&
             SaveManager.Instance != null &&
             !SaveManager.Instance.PrimeiraComumComprada();
 

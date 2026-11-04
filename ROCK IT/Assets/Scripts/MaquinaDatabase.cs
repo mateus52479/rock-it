@@ -43,7 +43,7 @@ public class MaquinaDatabase : MonoBehaviour
             new MaquinaDados {
                 id        = "inversor",
                 nome      = "Inversor de Polaridade",
-                descricao = "Inverte o valor da pedra e devolve o preço pago com 25% de bônus. Na média fica justo: ganha na maioria das vezes, mas o prêmio máximo vira um prejuízo enorme.",
+                descricao = "Inverte o valor da pedra e devolve o preço pago com 25% de bônus.",
                 preco     = 7000,
                 idUpgrade = ""
             }

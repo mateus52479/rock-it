@@ -19,7 +19,8 @@ public class PedraDatabase : MonoBehaviour
         todasAsPedras = new PedraDados[]
         {
             new PedraDados {
-                nome = "Pedra Comum",
+                nome = "Carvão",
+                nomeArquivo = "PEDRA COMUM",
                 descricao = "Uma pedra qualquer. Pode ter algo dentro, pode não ter.",
                 cor = new Color(0.5f, 0.4f, 0.3f),
                 precoCompra = 1,
@@ -33,7 +34,8 @@ public class PedraDatabase : MonoBehaviour
                 }
             },
             new PedraDados {
-                nome = "Pedra Bonita",
+                nome = "Cobre",
+                nomeArquivo = "PEDRA BONITA",
                 descricao = "Tem um brilho diferente. Pode valer algo.",
                 cor = new Color(0.8f, 0.6f, 0.8f),
                 precoCompra = 7,
@@ -113,7 +115,8 @@ public class PedraDatabase : MonoBehaviour
                 tabelaValores = TabelaArriscada(8400),
             },
             new PedraDados {
-                nome = "Asteroide",
+                nome = "Peridoto",
+                nomeArquivo = "ASTEROIDE",
                 descricao = "Veio do espaço. Ninguém sabe o que tem dentro.",
                 cor = new Color(0.3f, 0.3f, 0.35f),
                 precoCompra = 21000,
@@ -225,6 +228,29 @@ public class PedraDatabase : MonoBehaviour
                 return pedra;
         }
 
+        // Saves antigos guardavam o nome velho das pedras renomeadas.
+        string nomeAtual = NomeAtual(nome);
+
+        if (nomeAtual != null)
+        {
+            foreach (PedraDados pedra in todasAsPedras)
+            {
+                if (pedra.nome == nomeAtual)
+                    return pedra;
+            }
+        }
+
         return null;
+    }
+
+    static string NomeAtual(string nomeAntigo)
+    {
+        switch (nomeAntigo)
+        {
+            case "Pedra Comum": return "Carvão";
+            case "Pedra Bonita": return "Cobre";
+            case "Asteroide": return "Peridoto";
+            default: return null;
+        }
     }
 }

@@ -33,7 +33,7 @@
     {
       "id": "comprar_pedra",
       "personagem": "Pedrinha",
-      "texto": "A primeira Pedra Comum é grátis e ainda vem com o prêmio máximo. Compra ela para começar.",
+      "texto": "O primeiro Carvão é grátis e ainda vem com o prêmio máximo. Compra ele para começar.",
       "npcX": 600,
       "npcY": -380,
       "destacar": "itemLoja",

@@ -230,7 +230,7 @@ public class GameManager : MonoBehaviour
         float anterior = dinheiro;
 
         // Recompensa negativa não pode deixar o saldo negativo: se isso
-        // acontecesse o jogador não conseguiria comprar nem a Pedra Comum.
+        // acontecesse o jogador não conseguiria comprar nem o Carvão.
         // O teto evita que uma recompensa gigante vire infinito.
         dinheiro = Mathf.Clamp(
             dinheiro + valor,
