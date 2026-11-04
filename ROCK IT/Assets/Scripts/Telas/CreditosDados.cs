@@ -36,7 +36,6 @@ public static class CreditosDados
         new Secao("ARTE — PEDRAS", "Renata Nogueira Arangurem"),
         new Secao("ARTE — CENÁRIO E MÁQUINAS", "Renata Nogueira Arangurem"),
         new Secao("INTERFACE", "Renata Nogueira Arangurem"),
-        new Secao("TRILHA SONORA", "Mateus De Boit"),
         new Secao("EFEITOS SONOROS", "Mateus De Boit"),
         new Secao("ROTEIRO E TEXTOS", "Mateus De Boit"),
         new Secao("TRADUÇÃO", "Mateus De Boit")
@@ -51,11 +50,12 @@ public static class CreditosDados
     public static readonly Musica[] musicasTerceiros =
     {
         new Musica("Introducing Pikuniku, Trailer 1", "Calum Bowen (Bo En)"),
-        new Musica("The Forest", "Calum Bowen (Bo En)")
+        new Musica("The Forest", "Calum Bowen (Bo En)"),
+        new Musica("Main Title (Star Wars)", "John Williams")
     };
 
     public const string OrigemMusicas =
-        "Música original de Pikuniku — Sectordub / Devolver Digital";
+        "Pikuniku — Sectordub / Devolver Digital  ·  Star Wars: Main Title — Lucasfilm Ltd.";
 
     public const string LinksMusicas =
         "pikuniku.net  ·  calumbowen.bandcamp.com";
