@@ -34,6 +34,7 @@
     { "pt": "PAUSADO", "en": "PAUSED" },
     { "pt": "Retomar", "en": "Resume" },
     { "pt": "Salvar", "en": "Save" },
+    { "pt": "Salvando", "en": "Saving" },
 
     { "pt": "PEDRAS", "en": "STONES" },
     { "pt": "Pedras", "en": "Stones" },

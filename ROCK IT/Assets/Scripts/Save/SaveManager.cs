@@ -242,6 +242,22 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
+        // O aviso não bloqueia clique: o jogador continua livre para voltar
+        // ao jogo enquanto ele aparece no canto.
+        SalvandoUI.Mostrar();
+
+        try
+        {
+            SalvarDados();
+        }
+        finally
+        {
+            SalvandoUI.Concluido();
+        }
+    }
+
+    void SalvarDados()
+    {
         SaveData data = new SaveData();
 
         // Dinheiro.
@@ -289,6 +305,10 @@ public class SaveManager : MonoBehaviour
             ps.posX = p.transform.position.x;
             ps.posY = p.transform.position.y;
             ps.vidaAtual = p.GetVidaAtual();
+            ps.resultadoSorteado = p.GetResultadoSorteado();
+            ps.temResultadoSorteado = true;
+            ps.garantirMaximo = p.GetGarantirMaximo();
+            ps.tempoFermentacao = p.GetTempoFermentacao();
 
             data.pedras.Add(ps);
         }
@@ -424,7 +444,14 @@ public class SaveManager : MonoBehaviour
 
                     if (pm != null)
                     {
-                        pm.InicializarComVida(dados, ps.vidaAtual);
+                        pm.InicializarComVida(
+                            dados,
+                            ps.vidaAtual,
+                            ps.resultadoSorteado,
+                            ps.temResultadoSorteado,
+                            ps.garantirMaximo,
+                            ps.tempoFermentacao
+                        );
 
                         // O Scanner precisa marcar as pedras recriadas.
                         MaquinaScanner.NotificarNovaPedra(pm);

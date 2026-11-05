@@ -13,6 +13,10 @@ public class PedraManager : MonoBehaviour
     [Header("Referências")]
     public TextMeshPro vidaText;
 
+    [Header("Texto de vida")]
+    [Tooltip("Mostra o texto 'Vida: X' acima da pedra. Desligado por padrão.")]
+    public bool mostrarTextoVida = false;
+
     [Header("Texto Flutuante")]
     public GameObject prefabTextoFlutuante;
 
@@ -159,6 +163,11 @@ public class PedraManager : MonoBehaviour
         PrepararColisor();
         AplicarOrdemDeDesenho();
 
+        // O texto de vida fica escondido por padrão; o campo continua no
+        // prefab porque o selo de Fermentação usa a fonte dele.
+        if (vidaText != null)
+            vidaText.gameObject.SetActive(mostrarTextoVida);
+
         // "Vida: 10" precisa mudar junto com o idioma, mesmo com a pedra parada.
         Traducao.OnIdiomaMudou += AtualizarTextoVida;
     }
@@ -255,6 +264,7 @@ public class PedraManager : MonoBehaviour
         dados = d;
         vidaAtual = d.vidaMaxima;
         this.garantirMaximo = garantirMaximo;
+        tempoFermentacao = 0f;
         resultadoSorteado = SortearResultado(d);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -383,10 +393,29 @@ public class PedraManager : MonoBehaviour
 
     public void InicializarComVida(PedraDados d, int vida)
     {
+        InicializarComVida(d, vida, 0, false, false, 0f);
+    }
+
+    /// <summary>
+    /// Recria uma pedra que veio do save. Quando o save tem o resultado
+    /// sorteado, ele é reaproveitado: carregar não pode "rolar" a pedra de
+    /// novo, senão a cor do Scanner muda sem o jogador ter feito nada.
+    /// </summary>
+    public void InicializarComVida(
+        PedraDados d,
+        int vida,
+        int resultadoSalvo,
+        bool temResultado,
+        bool maximoGarantido,
+        float tempoFermentacaoSalvo)
+    {
         dados = d;
         vidaAtual = vida;
-        garantirMaximo = false;
-        resultadoSorteado = SortearResultado(d);
+        garantirMaximo = maximoGarantido;
+        tempoFermentacao = Mathf.Max(0f, tempoFermentacaoSalvo);
+        resultadoSorteado = temResultado
+            ? resultadoSalvo
+            : SortearResultado(d);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -1235,8 +1264,19 @@ public class PedraManager : MonoBehaviour
 
     void AtualizarTextoVida()
     {
-        if (vidaText != null)
-            vidaText.text = Traducao.TF("Vida: {0}", vidaAtual);
+        if (vidaText == null)
+            return;
+
+        if (!mostrarTextoVida)
+        {
+            if (vidaText.gameObject.activeSelf)
+                vidaText.gameObject.SetActive(false);
+
+            return;
+        }
+
+        vidaText.gameObject.SetActive(true);
+        vidaText.text = Traducao.TF("Vida: {0}", vidaAtual);
     }
 
     void PedraDestruida()
@@ -1421,7 +1461,7 @@ public class PedraManager : MonoBehaviour
             spriteRenderer.enabled = true;
 
         if (vidaText != null)
-            vidaText.gameObject.SetActive(true);
+            vidaText.gameObject.SetActive(mostrarTextoVida);
 
         if (colisor != null)
             colisor.enabled = true;
@@ -1564,6 +1604,9 @@ public class PedraManager : MonoBehaviour
 
     public string GetNomePedra() => dados != null ? dados.nome : "";
     public int GetVidaAtual() => vidaAtual;
+    public int GetResultadoSorteado() => resultadoSorteado;
+    public bool GetGarantirMaximo() => garantirMaximo;
+    public float GetTempoFermentacao() => tempoFermentacao;
     public int GetVidaMaxima() => dados != null ? dados.vidaMaxima : 0;
 
     /// <summary>Fração da vida já quebrada, de 0 (cheia) a 1 (destruída).</summary>

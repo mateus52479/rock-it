@@ -9,6 +9,22 @@ public class PedrasSalva
     public float posX;
     public float posY;
     public int vidaAtual;
+
+    // Resultado sorteado quando a pedra foi comprada. Sem isso, carregar o
+    // save sorteava de novo e o Scanner trocava a cor da pedra.
+    public int resultadoSorteado;
+
+    // Diferencia "resultado 0 de verdade" de um save antigo, que não tinha
+    // esse campo. Save antigo continua sorteando na primeira carga.
+    public bool temResultadoSorteado;
+
+    // O primeiro Carvão tem prêmio máximo garantido: a garantia precisa
+    // sobreviver ao save para continuar valendo depois de carregar.
+    public bool garantirMaximo;
+
+    // Segundos que a pedra já fermentou na mesa. Sem isso, carregar o save
+    // zerava o bônus da Fermentação.
+    public float tempoFermentacao;
 }
 
 [Serializable]
