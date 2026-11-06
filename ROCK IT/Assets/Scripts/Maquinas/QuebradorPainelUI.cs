@@ -387,7 +387,8 @@ public class QuebradorPainelUI : MonoBehaviour
         float larguraCanvas = Screen.width / escala;
         float alturaCanvas = Screen.height / escala;
 
-        float deslocamento = 80f;
+        // 80 de base + 5 px de folga para o painel não encostar na máquina.
+        float deslocamento = 85f;
         float x = xMaquina + deslocamento + Largura * 0.5f;
 
         float limiteDireita = larguraCanvas * 0.5f - Largura * 0.5f - 24f;
