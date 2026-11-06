@@ -2066,7 +2066,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.5, y: 3.19, z: 0}
-  m_LocalScale: {x: 10.5873575, y: 11.575851, z: 1}
+  m_LocalScale: {x: 0.1757992, y: 0.1757992, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -4082,7 +4082,7 @@ MonoBehaviour:
   maquinaQuebrador: {fileID: 1723791100}
   maquinaInversor: {fileID: 1762005769}
   posicaoScanner: {x: -7.4, y: 2.5}
-  posicaoQuebrador: {x: -7.4, y: 1.1}
+  posicaoQuebrador: {x: -5.98, y: 2.97}
   posicaoInversor: {x: 5.76, y: -2.62}
 --- !u!4 &703203005
 Transform:

@@ -5,7 +5,26 @@ using UnityEngine.EventSystems;
 
 public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
 {
+    [Header("Visual")]
     public SpriteRenderer spriteRenderer;
+
+    [Tooltip("Liquidificador vazio. Se ficar vazio, carrega de Resources/Sprites/Maquinas.")]
+    public Sprite spriteVazio;
+
+    [Tooltip("Liquidificador com pedra dentro, primeiro desenho.")]
+    public Sprite spriteComCoisa1;
+
+    [Tooltip("Liquidificador com pedra dentro, segundo desenho.")]
+    public Sprite spriteComCoisa2;
+
+    [Tooltip("Ajuste de tamanho do liquidificador na mesa.")]
+    public float escalaVisual = 0.4f;
+
+    [Tooltip("Tempo entre os dois desenhos enquanto há pedra dentro, em segundos.")]
+    public float intervaloAnimacao = 1f;
+
+    [Header("Cores de reserva")]
+    [Tooltip("Usadas só se o sprite correspondente não for encontrado.")]
     public Color corVazia = Color.white;
     public Color corOcupada = Color.cyan;
 
@@ -27,6 +46,13 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
     private Vector3 posicaoBase;
     private bool painelAberto;
 
+    private const string CaminhoVazio = "Sprites/Maquinas/liquidificador 0";
+    private const string CaminhoComCoisa1 = "Sprites/Maquinas/liquidificador com coisa 1";
+    private const string CaminhoComCoisa2 = "Sprites/Maquinas/liquidificador com coisa 2";
+
+    private float tempoAnimacao;
+    private bool segundoDesenho;
+
     /// <summary>Pedras que estão sendo quebradas agora, na ordem em que entraram.</summary>
     public List<PedraManager> PedrasProcessando
     {
@@ -36,6 +62,8 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
     void Awake()
     {
         GarantirSprite();
+        CarregarSprites();
+        AplicarSprite(spriteVazio, corVazia);
         posicaoBase = transform.position;
     }
 
@@ -45,16 +73,28 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
             spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
+    void CarregarSprites()
+    {
+        if (spriteVazio == null)
+            spriteVazio = SpriteUtil.CarregarDeResources(CaminhoVazio);
+
+        if (spriteComCoisa1 == null)
+            spriteComCoisa1 = SpriteUtil.CarregarDeResources(CaminhoComCoisa1);
+
+        if (spriteComCoisa2 == null)
+            spriteComCoisa2 = SpriteUtil.CarregarDeResources(CaminhoComCoisa2);
+    }
+
     public void Ativar()
     {
         GarantirSprite();
+        CarregarSprites();
 
         ativo = true;
         posicaoBase = transform.position;
         gameObject.SetActive(true);
 
-        if (spriteRenderer != null)
-            spriteRenderer.color = corVazia;
+        AplicarSprite(spriteVazio, corVazia);
     }
 
     /// <summary>Aceita quantas pedras o jogador conseguir arrastar para cima.</summary>
@@ -75,8 +115,9 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
         pedra.EsconderTemporariamente();
         pedra.transform.position = posicaoBase;
 
-        if (spriteRenderer != null)
-            spriteRenderer.color = corOcupada;
+        segundoDesenho = false;
+        tempoAnimacao = 0f;
+        AplicarSprite(spriteComCoisa1, corOcupada);
 
         if (rotinaQuebra == null)
             rotinaQuebra = StartCoroutine(QuebrarAutomaticamente());
@@ -114,8 +155,7 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
 
         rotinaQuebra = null;
 
-        if (spriteRenderer != null)
-            spriteRenderer.color = corVazia;
+        AplicarSprite(spriteVazio, corVazia);
 
         transform.position = posicaoBase;
     }
@@ -127,6 +167,16 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
         while (pedras.Count > 0)
         {
             tempo += Time.deltaTime;
+            tempoAnimacao += Time.deltaTime;
+
+            if (tempoAnimacao >= Mathf.Max(0.05f, intervaloAnimacao))
+            {
+                tempoAnimacao -= Mathf.Max(0.05f, intervaloAnimacao);
+                segundoDesenho = !segundoDesenho;
+                AplicarSprite(
+                    segundoDesenho ? spriteComCoisa2 : spriteComCoisa1,
+                    corOcupada);
+            }
 
             transform.position = posicaoBase + new Vector3(
                 Mathf.Sin(tempo * 52f) * amplitudeTremor,
@@ -137,6 +187,9 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
         }
 
         transform.position = posicaoBase;
+        segundoDesenho = false;
+        tempoAnimacao = 0f;
+        AplicarSprite(spriteVazio, corVazia);
         rotinaTremor = null;
     }
 
@@ -216,4 +269,44 @@ public class MaquinaQuebrador : MonoBehaviour, IMaquinaRecebedora
     }
 
     public int GetAtaquesPorSegundo() { return ataquesPorSegundo; }
+
+    void AplicarSprite(Sprite alvo, Color corReserva)
+    {
+        if (spriteRenderer == null)
+            return;
+
+        if (alvo == null)
+        {
+            spriteRenderer.color = corReserva;
+            return;
+        }
+
+        if (spriteRenderer.sprite != alvo)
+        {
+            spriteRenderer.sprite = alvo;
+            AjustarTamanho(alvo);
+        }
+
+        spriteRenderer.color = Color.white;
+    }
+
+    /// <summary>
+    /// O liquidificador tem 1000 px. A escala é fixa para ele ocupar o mesmo
+    /// tipo de espaço das outras máquinas da mesa; o collider acompanha o
+    /// desenho para o clique continuar pegando o corpo inteiro.
+    /// </summary>
+    void AjustarTamanho(Sprite sprite)
+    {
+        Bounds visivel = SpriteUtil.ObterBoundsVisiveis(sprite);
+
+        transform.localScale = Vector3.one * escalaVisual;
+
+        BoxCollider2D colisor = GetComponent<BoxCollider2D>();
+
+        if (colisor != null)
+        {
+            colisor.size = visivel.size;
+            colisor.offset = visivel.center;
+        }
+    }
 }

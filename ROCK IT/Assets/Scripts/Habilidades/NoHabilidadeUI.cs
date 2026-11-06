@@ -11,11 +11,27 @@ public class NoHabilidadeUI : MonoBehaviour,
     public TextMeshProUGUI textoNome;
     public TextMeshProUGUI textoCusto;
 
+    [Header("Bolas de habilidade")]
+    [Tooltip("Bola cinza: habilidade ainda bloqueada. Se ficar vazia, carrega de Resources/Sprites/Habilidades.")]
+    public Sprite spriteBloqueado;
+
+    [Tooltip("Bola amarela: habilidade já pode ser comprada.")]
+    public Sprite spriteDisponivel;
+
+    [Tooltip("Bola verde: habilidade já comprada.")]
+    public Sprite spriteComprado;
+
+    private const string CaminhoBloqueado = "Sprites/Habilidades/bola de habilidade";
+    private const string CaminhoDisponivel = "Sprites/Habilidades/bola de habilidade comprar";
+    private const string CaminhoComprado = "Sprites/Habilidades/bola de habilidade pago";
+
     private HabilidadeDados dados;
     private ArvoreHabilidadesUI arvore;
 
     void Awake()
     {
+        CarregarBolas();
+
         if (fundoNo != null)
         {
             TemaUI.AplicarPlaca(
@@ -59,13 +75,13 @@ public class NoHabilidadeUI : MonoBehaviour,
 
         if (desbloqueado)
         {
-            fundoNo.color = corDesbloqueado;
+            AplicarBola(spriteComprado, corDesbloqueado);
             textoCusto.text = "OK";
             textoCusto.color = TemaUI.TextoForte;
         }
         else if (disponivel)
         {
-            fundoNo.color = corDisponivel;
+            AplicarBola(spriteDisponivel, corDisponivel);
             textoCusto.text = "R$ " + dados.custo;
             textoCusto.color = GameManager.Instance.dinheiro >= dados.custo
                 ? TemaUI.Acento
@@ -73,10 +89,39 @@ public class NoHabilidadeUI : MonoBehaviour,
         }
         else
         {
-            fundoNo.color = corBloqueado;
+            AplicarBola(spriteBloqueado, corBloqueado);
             textoCusto.text = "X";
             textoCusto.color = TemaUI.TextoFraco;
         }
+    }
+
+    void CarregarBolas()
+    {
+        if (spriteBloqueado == null)
+            spriteBloqueado = SpriteUtil.CarregarDeResources(CaminhoBloqueado);
+
+        if (spriteDisponivel == null)
+            spriteDisponivel = SpriteUtil.CarregarDeResources(CaminhoDisponivel);
+
+        if (spriteComprado == null)
+            spriteComprado = SpriteUtil.CarregarDeResources(CaminhoComprado);
+    }
+
+    void AplicarBola(Sprite bola, Color corReserva)
+    {
+        if (fundoNo == null)
+            return;
+
+        if (bola == null)
+        {
+            // Sem a bola, mantém o visual antigo de placa tingida.
+            fundoNo.color = corReserva;
+            return;
+        }
+
+        fundoNo.sprite = bola;
+        fundoNo.type = Image.Type.Simple;
+        fundoNo.color = Color.white;
     }
 
     void Update()

@@ -16,7 +16,7 @@ public class MaquinaManager : MonoBehaviour
     [Header("Posições na mesa")]
     [Tooltip("Cada máquina aparece no seu lugar só depois de comprada. A lixeira fica onde está na cena.")]
     public Vector2 posicaoScanner = new Vector2(-7.4f, 2.5f);
-    public Vector2 posicaoQuebrador = new Vector2(-7.4f, 1.1f);
+    public Vector2 posicaoQuebrador = new Vector2(-5.98f, 2.97f);
     public Vector2 posicaoInversor = new Vector2(5.76f, -2.62f);
 
     void Awake()
